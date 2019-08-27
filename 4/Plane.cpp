@@ -30,7 +30,7 @@ bool Plane::getVisibility() const {
 	return visibility;
 }
 
-void Plane::draw() {
+void Plane::draw() const {
 	glPushMatrix();
 
 	glScalef(scale_x, 1, scale_z);
@@ -49,7 +49,7 @@ void Plane::draw() {
 	glPopMatrix();
 }
 
-void Plane::drawFrame() {
+void Plane::drawFrame() const {
 	glPushMatrix();
 	glScalef(scale_x, 1, scale_z);
 	glTranslated(center.getX(), center.getY(), center.getZ());
@@ -76,7 +76,7 @@ void Plane::drawFrame() {
 	glPopMatrix();
 }
 
-bool Plane::isHit(Ray ray, std::vector<Collision>& collisions) {
+bool Plane::isHit(Ray ray, std::vector<Collision>& collisions) const {
 	bool hit = false;
 
 	auto new_ray = transformRay(ray, center, Vector3f(scale_x, 1, scale_z));
@@ -103,7 +103,7 @@ bool Plane::isHit(Ray ray, std::vector<Collision>& collisions) {
 	return hit;
 }
 
-bool Plane::isSimpleHit(Ray ray) {
+bool Plane::isSimpleHit(Ray ray) const {
 	bool hit = false;
 
 	auto new_ray = transformRay(ray, center, Vector3f(scale_x, 1, scale_z));

@@ -14,10 +14,10 @@ public:
 	Material getMaterial() const;
 	bool getVisibility() const;
 
-	void draw();
-	void drawFrame();
-	bool isHit(Ray ray, std::vector<Collision>& collisions);
-	bool isSimpleHit(Ray ray);
+	void draw() const;
+	void drawFrame() const;
+	bool isHit(Ray ray, std::vector<Collision>& collisions) const;
+	bool isSimpleHit(Ray ray) const;
 
 private:
 	Vector3f center;

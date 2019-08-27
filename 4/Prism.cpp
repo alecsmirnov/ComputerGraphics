@@ -41,7 +41,7 @@ bool Prism::getVisibility() const {
 	return visibility;
 }
 
-void Prism::draw() {
+void Prism::draw() const {
 	glPushMatrix();
 	glTranslated(center.getX(), center.getY(), center.getZ());
 
@@ -58,7 +58,7 @@ void Prism::draw() {
 	glPopMatrix();
 }
 
-void Prism::drawFrame() {
+void Prism::drawFrame() const {
 	glPushMatrix();
 	glTranslated(center.getX(), center.getY(), center.getZ());
 
@@ -86,7 +86,7 @@ void Prism::drawFrame() {
 	glPopMatrix();
 }
 
-bool Prism::isHit(Ray ray, std::vector<Collision>& collisions) {
+bool Prism::isHit(Ray ray, std::vector<Collision>& collisions) const {
 	bool hit = false;
 
 	std::array<GLfloat, SIDES_COUNT> collision_time;
@@ -134,7 +134,7 @@ bool Prism::isHit(Ray ray, std::vector<Collision>& collisions) {
 	return hit;
 }
 
-bool Prism::isSimpleHit(Ray ray) {
+bool Prism::isSimpleHit(Ray ray) const {
 	bool hit = false;
 
 	GLfloat collision_time;
@@ -151,7 +151,7 @@ bool Prism::isSimpleHit(Ray ray) {
 	return hit;
 }
 
-bool Prism::isInPlane(const std::array<GLfloat, 4>& x, GLfloat xp, const std::array<GLfloat, 4>& y, GLfloat yp) {
+bool Prism::isInPlane(const std::array<GLfloat, 4>& x, GLfloat xp, const std::array<GLfloat, 4>& y, GLfloat yp) const {
 	bool hit = false;
 
 	for (GLubyte i = 0, j = SIDE_VERTICES - 1; i != SIDE_VERTICES; j = i++)
@@ -162,7 +162,7 @@ bool Prism::isInPlane(const std::array<GLfloat, 4>& x, GLfloat xp, const std::ar
 	return hit;
 }
 
-bool Prism::isPlaneHit(Ray ray, GLbyte ver1, GLbyte ver2, GLbyte ver3, GLbyte ver4, Vector3f& normal, GLfloat& time) {
+bool Prism::isPlaneHit(Ray ray, GLbyte ver1, GLbyte ver2, GLbyte ver3, GLbyte ver4, Vector3f& normal, GLfloat& time) const {
 	bool hit = true;
 
 	auto position = ray.position;

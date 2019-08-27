@@ -27,7 +27,7 @@ Color LightSource::getColor() const {
 	return color;
 }
 
-void LightSource::draw() {
+void LightSource::draw() const {
 	GLUquadricObj* quad_obj = gluNewQuadric();
 
 	glPushMatrix();

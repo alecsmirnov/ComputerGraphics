@@ -31,7 +31,7 @@ bool Sphere::getVisibility() const {
 	return visibility;
 }
 
-void Sphere::draw() {
+void Sphere::draw() const {
 	GLUquadricObj* quad_obj = gluNewQuadric();
 
 	glPushMatrix();
@@ -46,7 +46,7 @@ void Sphere::draw() {
 	gluDeleteQuadric(quad_obj);
 }
 
-void Sphere::drawFrame() {
+void Sphere::drawFrame() const {
 	GLUquadricObj* quad_obj = gluNewQuadric();
 
 	glPushMatrix();
@@ -70,7 +70,7 @@ void Sphere::drawFrame() {
 	glPopMatrix();
 }
 
-bool Sphere::isHit(Ray ray, std::vector<Collision>& collisions) {
+bool Sphere::isHit(Ray ray, std::vector<Collision>& collisions) const {
 	bool hit = false;
 
 	auto new_ray = transformRay(ray, center, Vector3f(radius, radius, radius));
@@ -109,7 +109,7 @@ bool Sphere::isHit(Ray ray, std::vector<Collision>& collisions) {
 	return hit;
 }
 
-bool Sphere::isSimpleHit(Ray ray) {
+bool Sphere::isSimpleHit(Ray ray) const {
 	bool hit = false;
 
 	auto new_ray = transformRay(ray, center, Vector3f(radius, radius, radius));

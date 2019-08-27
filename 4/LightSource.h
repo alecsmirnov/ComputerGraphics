@@ -15,7 +15,7 @@ public:
 	Vector3f getPosition() const;
 	Color getColor() const;
 
-	void draw();
+	void draw() const;
 
 	void rotate(GLfloat angle, const Vector3f& rotate_front);
 

@@ -31,10 +31,10 @@ public:
 	virtual Material getMaterial() const = 0;
 	virtual bool getVisibility() const = 0;
 
-	virtual void draw() = 0;
-	virtual void drawFrame() = 0;
-	virtual bool isHit(Ray ray, std::vector<Collision>& collisions) = 0;
-	virtual bool isSimpleHit(Ray ray) = 0;
+	virtual void draw() const = 0;
+	virtual void drawFrame() const = 0;
+	virtual bool isHit(Ray ray, std::vector<Collision>& collisions) const = 0;
+	virtual bool isSimpleHit(Ray ray) const = 0;
 };
 
 #endif
