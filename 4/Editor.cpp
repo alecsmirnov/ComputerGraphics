@@ -14,7 +14,11 @@ static constexpr Color GRID_COLOR     = ColorElem::BLUE;
 static constexpr GLint GRID_SIZE      = 50;
 static constexpr GLint GRID_CELL_SIZE = 1;
 
-static constexpr GLfloat SHINE_MIN = 0.5f;
+static constexpr GLint	 RECURS_LVL_MAX = 4;
+static constexpr GLfloat SHINE_MIN		= 0.5f;
+
+static constexpr GLint PIXEL_SIZE_MIN = 1;
+static constexpr GLint PIXEL_SIZE_MAX = 20;
 
 static constexpr GLfloat PI_F = 3.14159265358979f;
 
@@ -28,13 +32,11 @@ Editor::Editor(GLint width, GLint height) {
 	camera.setFront(CAMERA_START_FRONT);
 	camera.setSpeed(CAMERA_SPEED);
 
-	ray_tracing_field = new Color*[height];
-	for (GLint i = 0; i != height; ++i)
-		ray_tracing_field[i] = new Color[width];
+	ray_tracing_field = nullptr;
+	rayTracingFieldResize(width, height);
 
 	current_figure = 0;
-	recurs_lvl = 4;
-	pixel_size = 2;
+	pixel_size = 4;
 
 	figure_selection = false;
 	smoothing = false;
@@ -63,9 +65,7 @@ void Editor::start(int* argc, char* argv[]) {
 }
 
 Editor::~Editor() {
-	for (GLint i = 0; i != height; ++i)
-		delete[] ray_tracing_field[i];
-	delete[] ray_tracing_field;
+	rayTracingFieldDelete();
 
 	for (std::vector<Figure>::size_type i = 0; i != figures.size(); ++i)
 		delete[] figures[i];
@@ -80,10 +80,10 @@ void Editor::readObjectsFile(std::string filename) {
 	auto readMterial = [](std::ifstream& input_stream) -> Material {
 		Material material;
 
-		input_stream >> material.ambient[0] >> material.ambient[1] >> material.ambient[2] >> material.ambient[3];
-		input_stream >> material.diffuse[0] >> material.diffuse[1] >> material.diffuse[2] >> material.diffuse[3];
-		input_stream >> material.specular[0] >> material.specular[1] >> material.specular[2] >> material.specular[3];
-		input_stream >> material.emission[0] >> material.emission[1] >> material.emission[2] >> material.emission[3];
+		input_stream >> material.ambient.R >> material.ambient.G >> material.ambient.B;
+		input_stream >> material.diffuse.R >> material.diffuse.G >> material.diffuse.B;
+		input_stream >> material.specular.R >> material.specular.G >> material.specular.B;
+		input_stream >> material.emission.R >> material.emission.G >> material.emission.B;
 		input_stream >> material.shine;
 
 		return material;
@@ -196,10 +196,7 @@ Color Editor::getShadeColor(Ray ray) {
 		auto obj_id = best_collisions[0].object_id;
 		auto obj_material = figures[obj_id]->getMaterial();
 
-		color.R = obj_material.emission[0];
-		color.G = obj_material.emission[1];
-		color.B = obj_material.emission[2];
-
+		color = obj_material.emission;
 		auto hit_normal = normalize(first_collision.normal);
 
 		GLfloat eps = 0.0001f;
@@ -208,9 +205,9 @@ Color Editor::getShadeColor(Ray ray) {
 		for (std::vector<LightSource>::size_type i = 0; i != light_sources.size(); ++i) {
 			auto light_color = light_sources[i].getColor();
 
-			Color ambient_color = {obj_material.ambient[0] * light_color.R, 
-								   obj_material.ambient[1] * light_color.G, 
-								   obj_material.ambient[2] * light_color.B};
+			Color ambient_color = {obj_material.ambient.R * light_color.R, 
+								   obj_material.ambient.G * light_color.G, 
+								   obj_material.ambient.B * light_color.B};
 
 			color = {color.R + ambient_color.R, color.G + ambient_color.G, color.B + ambient_color.B};
 
@@ -222,9 +219,9 @@ Color Editor::getShadeColor(Ray ray) {
 				auto lambert_angle = scalarProduct(source, hit_normal);
 
 				if (0.0f < lambert_angle) {
-					Color diffuse_color = {lambert_angle * obj_material.diffuse[0] * light_color.R,
-										   lambert_angle * obj_material.diffuse[1] * light_color.G,
-										   lambert_angle * obj_material.diffuse[2] * light_color.B};
+					Color diffuse_color = {lambert_angle * obj_material.diffuse.R * light_color.R,
+										   lambert_angle * obj_material.diffuse.G * light_color.G,
+										   lambert_angle * obj_material.diffuse.B * light_color.B};
 
 					color = {color.R + diffuse_color.R, color.G + diffuse_color.G, color.B + diffuse_color.B};
 				}
@@ -234,21 +231,19 @@ Color Editor::getShadeColor(Ray ray) {
 				if (0.0f < phong_angle) {
 					auto phong_coef = std::powf(phong_angle, obj_material.shine);
 
-					Color specular_color = {phong_coef * obj_material.specular[0] * light_color.R,
-											phong_coef * obj_material.specular[1] * light_color.G, 
-											phong_coef * obj_material.specular[2] * light_color.B};
+					Color specular_color = {phong_coef * obj_material.specular.R * light_color.R,
+											phong_coef * obj_material.specular.G * light_color.G, 
+											phong_coef * obj_material.specular.B * light_color.B};
 
 					color = {color.R + specular_color.R, color.G + specular_color.G, color.B + specular_color.B};
 				}
 
-				if (ray.recurs_lvl != recurs_lvl && SHINE_MIN < obj_material.shine) {
+				if (ray.recurs_lvl < RECURS_LVL_MAX && SHINE_MIN < obj_material.shine) {
 					Ray new_ray = {first_collision.position - ray.front * eps,
-									normalize(ray.front - hit_normal * scalarProduct(ray.front, hit_normal) * 2.0f),
-									new_ray.recurs_lvl = ray.recurs_lvl + 1};
+								   normalize(ray.front - hit_normal * scalarProduct(ray.front, hit_normal) * 2.0f),
+								   new_ray.recurs_lvl = ray.recurs_lvl + 1};
 
-					Color specular_color = {obj_material.specular[0], 
-											obj_material.specular[1],
-											obj_material.specular[2]};
+					auto specular_color = obj_material.specular;
 
 					auto shade_color = getShadeColor(new_ray);
 		
@@ -298,7 +293,7 @@ void Editor::trace(const Vector3f& position, GLfloat aspect) {
 
 					ray.front = normalize(front);
 					shade_color = getShadeColor(ray);
-					color = {color.R + shade_color.R, color.G + shade_color.G, color.B + shade_color.B };
+					color = {color.R + shade_color.R, color.G + shade_color.G, color.B + shade_color.B};
 
 					coef = -coef;
 				}
@@ -341,6 +336,26 @@ void Editor::changeFigureVisibility() {
 		figures[current_figure]->setVisibility(!figures[current_figure]->getVisibility());
 }
 
+void Editor::increasePixelSize() {
+	if (ray_tracing && pixel_size < PIXEL_SIZE_MAX)
+		++pixel_size;
+}
+
+void Editor::decreasePixelSize() {
+	if (ray_tracing && PIXEL_SIZE_MIN < pixel_size)
+		--pixel_size;
+}
+
+void Editor::figureSelectionSwitch() {
+	if (!ray_tracing)
+		figure_selection = !figure_selection;
+}
+
+void Editor::smoothingSwitch() {
+	if (ray_tracing)
+		smoothing = !smoothing;
+}
+
 void Editor::drawGrid() {
 	glColor3f(GRID_COLOR.R, GRID_COLOR.G, GRID_COLOR.B);
 
@@ -357,6 +372,27 @@ void Editor::drawGrid() {
 	}
 }
 
+void Editor::rayTracingFieldResize(GLint new_width, GLint new_height) {
+	rayTracingFieldDelete();
+
+	width = new_width;
+	height = new_height;
+
+	ray_tracing_field = new Color*[height];
+	for (GLint i = 0; i != height; ++i)
+		ray_tracing_field[i] = new Color[width];
+}
+
+void Editor::rayTracingFieldDelete() {
+	if (ray_tracing_field) {
+		for (GLint i = 0; i != height; ++i)
+			delete[] ray_tracing_field[i];
+		delete[] ray_tracing_field;
+
+		ray_tracing_field = nullptr;
+	}
+}
+
 void Editor::displayEvent() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
@@ -367,15 +403,14 @@ void Editor::displayEvent() {
 	auto camera_front = camera.getFront();
 	auto camera_up = camera.getUp();
 
-	gluLookAt(camera_pos.getX(), camera_pos.getY(), camera_pos.getZ(),
-		camera_front.getX(), camera_front.getY(), camera_front.getZ(),
-		camera_up.getX(), camera_up.getY(), camera_up.getZ());
+	gluLookAt(camera_pos.getX(),   camera_pos.getY(),   camera_pos.getZ(),
+			  camera_front.getX(), camera_front.getY(), camera_front.getZ(),
+			  camera_up.getX(),    camera_up.getY(),    camera_up.getZ());
 
 	reshapeEvent(width, height);
 
-	if (ray_tracing) {
+	if (ray_tracing)
 		trace(camera.getPosition(), static_cast<GLfloat>(width / height));
-	}
 	else {
 		for (auto& figure : figures)
 			if (figure->getVisibility())
@@ -397,8 +432,7 @@ void Editor::displayEvent() {
 }
 
 void Editor::reshapeEvent(GLint new_width, GLint new_height) {
-	width = new_width;
-	height = new_height;
+	rayTracingFieldResize(new_width, new_height);
 
 	if (ray_tracing) {
 		glMatrixMode(GL_MODELVIEW);
@@ -418,17 +452,19 @@ void Editor::reshapeEvent(GLint new_width, GLint new_height) {
 
 void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
 	switch (std::tolower(key)) {
-		case Q_BUTTON: smoothing = !smoothing; break;
-		case E_BUTTON: figure_selection = !figure_selection; break;
-		case W_BUTTON: camera.moveUp();    break;
-		case S_BUTTON: camera.moveDown();  break;
-		case A_BUTTON: camera.moveLeft();  break;
-		case D_BUTTON: camera.moveRight(); break;
-		case C_BUTTON: nextFigure(); break;
-		case V_BUTTON: prevFigure(); break;
-		case F_BUTTON: changeFigureVisibility(); break;
-		case ESC_BUTTON: glutLeaveMainLoop(); break;
-		case TAB_BUTTON: ray_tracing = !ray_tracing; break;
+		case Q_BUTTON:	   prevFigure();			   break;
+		case E_BUTTON:	   nextFigure();			   break;
+		case R_BUTTON:	   changeFigureVisibility();   break;
+		case W_BUTTON:	   camera.moveUp();			   break;
+		case S_BUTTON:	   camera.moveDown();		   break;
+		case A_BUTTON:	   camera.moveLeft();		   break;
+		case D_BUTTON:	   camera.moveRight();		   break;
+		case Z_BUTTON:	   decreasePixelSize();		   break;
+		case X_BUTTON:	   increasePixelSize();		   break;
+		case ENTER_BUTTON: smoothingSwitch();		   break;
+		case SPACE_BUTTON: figureSelectionSwitch();	   break;
+		case TAB_BUTTON:   ray_tracing = !ray_tracing; break;
+		case ESC_BUTTON:   glutLeaveMainLoop();		   break;
 		default:;
 	}
 

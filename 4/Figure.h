@@ -13,13 +13,11 @@ static constexpr Color   OUTER_FRAME_COLOR = ColorElem::RED;
 static constexpr GLfloat INNER_FRAME_WIDTH = 1.0f;
 static constexpr GLfloat OUTER_FRAME_WIDTH = 3.0f;
 
-constexpr GLubyte MATERIAL_SIZE = 4;
-
 struct Material {
-	std::array<GLfloat, MATERIAL_SIZE> ambient;
-	std::array<GLfloat, MATERIAL_SIZE> diffuse;
-	std::array<GLfloat, MATERIAL_SIZE> specular;
-	std::array<GLfloat, MATERIAL_SIZE> emission;
+	Color ambient;
+	Color diffuse;
+	Color specular;
+	Color emission;
 	GLfloat shine;
 };
 

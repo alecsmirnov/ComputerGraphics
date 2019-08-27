@@ -31,8 +31,15 @@ private:
 	static void nextFigure();
 	static void prevFigure();
 	static void changeFigureVisibility();
+	static void increasePixelSize();
+	static void decreasePixelSize();
+	static void figureSelectionSwitch();
+	static void smoothingSwitch();
 
 	static void drawGrid();
+
+	static void rayTracingFieldResize(GLint new_width, GLint new_height);
+	static void rayTracingFieldDelete();
 
 	static void displayEvent();
 	static void reshapeEvent(GLint new_width, GLint new_height);
@@ -52,9 +59,7 @@ private:
 	static inline std::vector<LightSource> light_sources;
 
 	static inline std::vector<Figure*>::size_type current_figure;
-
 	static inline GLint pixel_size;
-	static inline GLubyte recurs_lvl;
 
 	static inline bool figure_selection;
 	static inline bool smoothing;
