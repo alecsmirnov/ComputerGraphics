@@ -2,7 +2,6 @@
 #define SPHERE_H
 
 #include "Figure.h"
-#include "Color.h"
 
 class Sphere : public Figure {
 public:
@@ -14,7 +13,6 @@ public:
 
 	Material getMaterial() const;
 	bool getVisibility() const;
-	ObjectType getType() const;
 
 	void draw();
 	void drawFrame();
@@ -22,13 +20,10 @@ public:
 	bool isSimpleHit(Ray ray);
 
 private:
-	static constexpr ObjectType type = ObjectType::SPHERE;
-
 	GLfloat radius;
 	Vector3f center;
 
 	Color color;
-	Color frame_color;
 	Material material;
 
 	bool visibility;

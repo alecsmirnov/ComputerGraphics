@@ -2,10 +2,7 @@
 
 #include <cmath>
 
-static constexpr Color	 FRAME_COLOR	  = ColorElem::RED;
-static constexpr GLfloat FRAME_LINE_WIDTH = 10.0f;
-
-static constexpr GLubyte COLLISIONS_MAX = 2;
+static constexpr GLfloat FRAME_FAULT = 0.07f;
 
 static constexpr GLubyte SIDE_VERTICES = 4;
 static constexpr GLubyte SIDES_COUNT   = 6;
@@ -25,7 +22,6 @@ Prism::Prism(const std::array<Vector3f, vertices>& coords, const Vector3f& cente
 	this->color = color;
 	this->material = material;
 
-	frame_color = FRAME_COLOR;
 	visibility = true;
 }
 
@@ -45,17 +41,13 @@ bool Prism::getVisibility() const {
 	return visibility;
 }
 
-ObjectType Prism::getType() const {
-	return type;
-}
-
 void Prism::draw() {
 	glPushMatrix();
 	glTranslated(center.getX(), center.getY(), center.getZ());
 
+	glColor3f(color.R, color.G, color.B);
 	for (GLubyte i = 0; i != SIDES_COUNT; ++i) {
 		glBegin(GL_QUADS);
-		glColor3f(color.R, color.G, color.B);
 
 		for (GLubyte j = 0; j != SIDE_VERTICES; ++j)
 			glVertex3f(coords[PLANES_COORD[i][j]].getX(), coords[PLANES_COORD[i][j]].getY(), coords[PLANES_COORD[i][j]].getZ());
@@ -70,17 +62,26 @@ void Prism::drawFrame() {
 	glPushMatrix();
 	glTranslated(center.getX(), center.getY(), center.getZ());
 
-	glLineWidth(FRAME_LINE_WIDTH);
-	glColor3f(FRAME_COLOR.R, FRAME_COLOR.G, FRAME_COLOR.B);
+	auto frame = [&](GLfloat frame_width, Color frame_color) {
+		glLineWidth(frame_width);
+		glColor3f(frame_color.R, frame_color.G, frame_color.B);
 
-	for (GLubyte i = 0; i != SIDES_COUNT; ++i) {
-		glBegin(GL_LINE_LOOP);
+		for (GLubyte i = 0; i != SIDES_COUNT; ++i) {
+			glBegin(GL_LINE_LOOP);
 
-		for (GLubyte j = 0; j != SIDE_VERTICES; ++j)
-			glVertex3f(coords[PLANES_COORD[i][j]].getX(), coords[PLANES_COORD[i][j]].getY(), coords[PLANES_COORD[i][j]].getZ());
+			for (GLubyte j = 0; j != SIDE_VERTICES; ++j)
+				glVertex3f(coords[PLANES_COORD[i][j]].getX() * FRAME_COEF - FRAME_FAULT,
+						   coords[PLANES_COORD[i][j]].getY() * FRAME_COEF - FRAME_FAULT,
+						   coords[PLANES_COORD[i][j]].getZ() * FRAME_COEF - FRAME_FAULT);
 
-		glEnd();
-	}
+			glEnd();
+		}
+
+		glLineWidth(1.0f);
+	};
+
+	frame(INNER_FRAME_WIDTH, INNER_FRAME_COLOR);
+	frame(OUTER_FRAME_WIDTH, OUTER_FRAME_COLOR);
 
 	glPopMatrix();
 }

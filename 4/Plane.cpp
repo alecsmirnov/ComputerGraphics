@@ -2,24 +2,32 @@
 
 #include <cmath>
 
+static constexpr GLfloat FRAME_FAULT = 0.014f;
+
 Plane::Plane(const Vector3f& center, GLfloat scale_x, GLfloat scale_z, Color color, Material material) {
 	this->center = center;
 	this->scale_x = scale_x;
 	this->scale_z = scale_z;
 	this->color = color;
 	this->material = material;
+
+	visibility = true;
 }
 
 void Plane::setMaterial(Material material) {
 	this->material = material;
 }
 
+void Plane::setVisibility(bool visibility) {
+	this->visibility = visibility;
+}
+
 Material Plane::getMaterial() const {
 	return material;
 }
 
-ObjectType Plane::getType() const {
-	return type;
+bool Plane::getVisibility() const {
+	return visibility;
 }
 
 void Plane::draw() {
@@ -28,15 +36,42 @@ void Plane::draw() {
 	glScalef(scale_x, 1, scale_z);
 	glTranslated(center.getX(), center.getY(), center.getZ());
 
-	glBegin(GL_QUADS);
 	glColor3f(color.R, color.G, color.B);
+	glBegin(GL_QUADS);
 
-	glVertex3f(-1, 0, -1);
-	glVertex3f(-1, 0, 1);
-	glVertex3f(1, 0, 1);
-	glVertex3f(1, 0, -1);
+	glVertex3f(-1.0f, 0.0f, -1.0f);
+	glVertex3f(-1.0f, 0.0f, 1.0f);
+	glVertex3f(1.0f, 0.0f, 1.0f);
+	glVertex3f(1.0f, 0.0f, -1.0f);
 
 	glEnd();
+
+	glPopMatrix();
+}
+
+void Plane::drawFrame() {
+	glPushMatrix();
+	glScalef(scale_x, 1, scale_z);
+	glTranslated(center.getX(), center.getY(), center.getZ());
+
+	auto frame = [&](GLfloat frame_width, Color frame_color) {
+		glColor3f(frame_color.R, frame_color.G, frame_color.B);
+		glLineWidth(frame_width);
+
+		glBegin(GL_LINE_LOOP);
+	
+		glVertex3f(-1.0f * FRAME_COEF + FRAME_FAULT, 0.0f, -1.0f * FRAME_COEF + FRAME_FAULT);
+		glVertex3f(-1.0f * FRAME_COEF + FRAME_FAULT, 0.0f, 1.0f * FRAME_COEF - FRAME_FAULT);
+		glVertex3f(1.0f * FRAME_COEF - FRAME_FAULT, 0.0f, 1.0f * FRAME_COEF - FRAME_FAULT);
+		glVertex3f(1.0f * FRAME_COEF - FRAME_FAULT, 0.0f, -1.0f * FRAME_COEF + FRAME_FAULT);
+
+		glEnd();
+
+		glLineWidth(1.0f);
+	};
+
+	frame(INNER_FRAME_WIDTH, INNER_FRAME_COLOR);
+	frame(OUTER_FRAME_WIDTH, OUTER_FRAME_COLOR);
 
 	glPopMatrix();
 }

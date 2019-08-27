@@ -5,6 +5,8 @@
 
 #include "Vector3f.h"
 
+static constexpr GLubyte COLLISIONS_MAX = 2;
+
 struct Ray {
 	Vector3f position;
 	Vector3f front;

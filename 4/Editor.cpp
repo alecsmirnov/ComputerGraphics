@@ -18,6 +18,8 @@ static constexpr GLfloat SHINE_MIN = 0.5f;
 
 static constexpr GLfloat PI_F = 3.14159265358979f;
 
+enum class ObjectType {SPHERE, PRISM, PLANE};
+
 Editor::Editor(GLint width, GLint height) {
 	this->width = width;
 	this->height = height;
@@ -30,9 +32,11 @@ Editor::Editor(GLint width, GLint height) {
 	for (GLint i = 0; i != height; ++i)
 		ray_tracing_field[i] = new Color[width];
 
+	current_figure = 0;
 	recurs_lvl = 4;
 	pixel_size = 2;
 
+	figure_selection = false;
 	smoothing = false;
 	ray_tracing = false;
 }
@@ -149,99 +153,6 @@ void Editor::readLightSourcesFile(std::string filename) {
 		light_sources.push_back(LightSource(Vector3f(position_x, position_y, position_z), color));
 
 	light_file.close();
-}
-
-void Editor::displayEvent() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
-	glLoadIdentity();
-
-	auto camera_pos = camera.getPosition();
-	auto camera_front = camera.getFront();
-	auto camera_up = camera.getUp();
-
-	glutSetCursor(GLUT_CURSOR_NONE);
-	gluLookAt(camera_pos.getX(),   camera_pos.getY(),   camera_pos.getZ(),
-			  camera_front.getX(), camera_front.getY(), camera_front.getZ(),
-			  camera_up.getX(),    camera_up.getY(),    camera_up.getZ());
-
-	reshapeEvent(width, height);
-
-	if (ray_tracing) {
-		trace(camera.getPosition(), static_cast<GLfloat>(width / height));
-	}
-	else {
-		for (auto& figure : figures)
-			figure->draw();
-
-		drawGrid();
-	}
-
-	for (auto& light : light_sources)
-		light.draw();
-
-	glutPostRedisplay();
-
-	glutSwapBuffers();
-	glFinish();
-}
-
-void Editor::reshapeEvent(GLint new_width, GLint new_height) {
-	width = new_width;
-	height = new_height;
-
-	if (ray_tracing) {
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluOrtho2D(0, width, 0, height);
-	}
-	else {
-		glViewport(0, 0, width, height);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluPerspective(60.0, width / height, 0.1, GRID_SIZE * 2.0f);
-		glMatrixMode(GL_MODELVIEW);
-	}
-}
-
-void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
-	switch (std::tolower(key)) {
-		case Q_BUTTON: smoothing = !smoothing; break;
-		case E_BUTTON: break;
-		case W_BUTTON: camera.moveUp();    break;
-		case S_BUTTON: camera.moveDown();  break;
-		case A_BUTTON: camera.moveLeft();  break;
-		case D_BUTTON: camera.moveRight(); break;
-		case ESC_BUTTON: glutLeaveMainLoop(); break;
-		case ENTER_BUTTON: ray_tracing = !ray_tracing; break;
-		default:; 
-	}
-
-	glutPostRedisplay();
-}
-
-void Editor::mouseMoveEvent(int x, int y) {
-	camera.mouseView(width, height);
-
-	glutPostRedisplay();
-}
-
-void Editor::drawGrid() {
-	glColor3f(GRID_COLOR.R, GRID_COLOR.G, GRID_COLOR.B);
-
-	for (GLint i = -GRID_SIZE; i <= GRID_SIZE; i += GRID_CELL_SIZE) {
-		glBegin(GL_LINES);
-
-		glVertex3i(-GRID_SIZE, 0, i);
-		glVertex3i(GRID_SIZE, 0, i);
-
-		glVertex3i(i, 0, -GRID_SIZE);
-		glVertex3i(i, 0, GRID_SIZE);
-
-		glEnd();
-	}
 }
 
 bool Editor::isShadow(Ray ray) {
@@ -413,4 +324,119 @@ void Editor::trace(const Vector3f& position, GLfloat aspect) {
 			glColor3f(ray_tracing_field[i][j].R, ray_tracing_field[i][j].G, ray_tracing_field[i][j].B);
 			glRecti(j, i, j + pixel_size, i + pixel_size);
 		}
+}
+
+void Editor::nextFigure() {
+	if (figure_selection && 1 < figures.size())
+		current_figure = (current_figure + 1) % figures.size();
+}
+
+void Editor::prevFigure() {
+	if (figure_selection && 1 < figures.size())
+		current_figure = current_figure == 0 ? figures.size() - 1 : current_figure - 1;
+}
+
+void Editor::changeFigureVisibility() {
+	if (figure_selection && !figures.empty())
+		figures[current_figure]->setVisibility(!figures[current_figure]->getVisibility());
+}
+
+void Editor::drawGrid() {
+	glColor3f(GRID_COLOR.R, GRID_COLOR.G, GRID_COLOR.B);
+
+	for (GLint i = -GRID_SIZE; i <= GRID_SIZE; i += GRID_CELL_SIZE) {
+		glBegin(GL_LINES);
+
+		glVertex3i(-GRID_SIZE, 0, i);
+		glVertex3i(GRID_SIZE, 0, i);
+
+		glVertex3i(i, 0, -GRID_SIZE);
+		glVertex3i(i, 0, GRID_SIZE);
+
+		glEnd();
+	}
+}
+
+void Editor::displayEvent() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glutSetCursor(GLUT_CURSOR_NONE);
+	glLoadIdentity();
+
+	auto camera_pos = camera.getPosition();
+	auto camera_front = camera.getFront();
+	auto camera_up = camera.getUp();
+
+	gluLookAt(camera_pos.getX(), camera_pos.getY(), camera_pos.getZ(),
+		camera_front.getX(), camera_front.getY(), camera_front.getZ(),
+		camera_up.getX(), camera_up.getY(), camera_up.getZ());
+
+	reshapeEvent(width, height);
+
+	if (ray_tracing) {
+		trace(camera.getPosition(), static_cast<GLfloat>(width / height));
+	}
+	else {
+		for (auto& figure : figures)
+			if (figure->getVisibility())
+				figure->draw();
+
+		if (figure_selection && !figures.empty())
+				figures[current_figure]->drawFrame();
+
+		drawGrid();
+	}
+
+	for (auto& light : light_sources)
+		light.draw();
+
+	glutPostRedisplay();
+
+	glutSwapBuffers();
+	glFinish();
+}
+
+void Editor::reshapeEvent(GLint new_width, GLint new_height) {
+	width = new_width;
+	height = new_height;
+
+	if (ray_tracing) {
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluOrtho2D(0, width, 0, height);
+	}
+	else {
+		glViewport(0, 0, width, height);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(60.0, width / height, 0.1, GRID_SIZE * 2.0f);
+		glMatrixMode(GL_MODELVIEW);
+	}
+}
+
+void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
+	switch (std::tolower(key)) {
+		case Q_BUTTON: smoothing = !smoothing; break;
+		case E_BUTTON: figure_selection = !figure_selection; break;
+		case W_BUTTON: camera.moveUp();    break;
+		case S_BUTTON: camera.moveDown();  break;
+		case A_BUTTON: camera.moveLeft();  break;
+		case D_BUTTON: camera.moveRight(); break;
+		case C_BUTTON: nextFigure(); break;
+		case V_BUTTON: prevFigure(); break;
+		case F_BUTTON: changeFigureVisibility(); break;
+		case ESC_BUTTON: glutLeaveMainLoop(); break;
+		case TAB_BUTTON: ray_tracing = !ray_tracing; break;
+		default:;
+	}
+
+	glutPostRedisplay();
+}
+
+void Editor::mouseMoveEvent(int x, int y) {
+	camera.mouseView(width, height);
+
+	glutPostRedisplay();
 }

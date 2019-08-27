@@ -2,13 +2,9 @@
 
 #include <cmath>
 
-static constexpr Color FRAME_COLOR = ColorElem::RED;
-
-static constexpr GLint    NODE_SIZE			= 10;
-static constexpr GLdouble FRAME_RADIUS_COEF = 1.02;
+static constexpr GLint NODE_SIZE = 10;
 
 static constexpr GLfloat COLLISION_TIME	= 0.00001f;
-static constexpr GLubyte COLLISIONS_MAX = 2;
 
 Sphere::Sphere(GLfloat radius, const Vector3f& center, Color color, Material material) {
 	this->radius = radius;
@@ -16,7 +12,6 @@ Sphere::Sphere(GLfloat radius, const Vector3f& center, Color color, Material mat
 	this->color = color;
 	this->material = material;
 
-	frame_color = FRAME_COLOR;
 	visibility = true;
 }
 
@@ -34,10 +29,6 @@ Material Sphere::getMaterial() const {
 
 bool Sphere::getVisibility() const {
 	return visibility;
-}
-
-ObjectType Sphere::getType() const {
-	return type;
 }
 
 void Sphere::draw() {
@@ -59,15 +50,24 @@ void Sphere::drawFrame() {
 	GLUquadricObj* quad_obj = gluNewQuadric();
 
 	glPushMatrix();
-
 	glTranslated(center.getX(), center.getY(), center.getZ());
-	glColor3f(frame_color.R, frame_color.G, frame_color.B);
-	gluQuadricDrawStyle(quad_obj, GLU_LINE);
-	gluSphere(quad_obj, radius * FRAME_RADIUS_COEF, NODE_SIZE, NODE_SIZE);
+
+	auto frame = [&](GLfloat frame_width, Color frame_color) {
+		glColor3f(frame_color.R, frame_color.G, frame_color.B);
+		glLineWidth(frame_width);
+
+		gluQuadricDrawStyle(quad_obj, GLU_LINE);
+		gluSphere(quad_obj, radius * FRAME_COEF, NODE_SIZE, NODE_SIZE);
+
+		glLineWidth(1.0f);
+	};
+
+	frame(INNER_FRAME_WIDTH, INNER_FRAME_COLOR);
+	frame(OUTER_FRAME_WIDTH, OUTER_FRAME_COLOR);
+	
+	gluDeleteQuadric(quad_obj);
 
 	glPopMatrix();
-
-	gluDeleteQuadric(quad_obj);
 }
 
 bool Sphere::isHit(Ray ray, std::vector<Collision>& collisions) {

@@ -2,7 +2,6 @@
 #define PRISM_H
 
 #include "Figure.h"
-#include "Color.h"
 
 class Prism : public Figure {
 public:
@@ -17,7 +16,6 @@ public:
 
 	Material getMaterial() const;
 	bool getVisibility() const;
-	ObjectType getType() const;
 
 	void draw();
 	void drawFrame();
@@ -29,13 +27,10 @@ private:
 	bool isPlaneHit(Ray ray, GLbyte ver1, GLbyte ver2, GLbyte ver3, GLbyte ver4, Vector3f& N, GLfloat& time);
 
 private:
-	static constexpr ObjectType type = ObjectType::PRISM;
-
 	std::array<Vector3f, vertices> coords;
 	Vector3f center;
 
 	Color color;
-	Color frame_color;
 	Material material;
 
 	bool visibility;

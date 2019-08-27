@@ -23,17 +23,21 @@ private:
 	static void readObjectsFile(std::string filename);
 	static void readLightSourcesFile(std::string filename);
 
-	static void displayEvent();
-	static void reshapeEvent(GLint new_width, GLint new_height);
-	static void keyboardEvent(std::uint8_t key, int x, int y);
-	static void mouseMoveEvent(int x, int y);
-
-	static void drawGrid();
-
 	static bool isShadow(Ray ray);
 	static std::vector<Collision> getCollisions(Ray ray);
 	static Color getShadeColor(Ray ray);
 	static void trace(const Vector3f& position, GLfloat aspect);
+
+	static void nextFigure();
+	static void prevFigure();
+	static void changeFigureVisibility();
+
+	static void drawGrid();
+
+	static void displayEvent();
+	static void reshapeEvent(GLint new_width, GLint new_height);
+	static void keyboardEvent(std::uint8_t key, int x, int y);
+	static void mouseMoveEvent(int x, int y);
 	
 private:
 	static inline const char* window_title = "Ray tracing";
@@ -47,9 +51,12 @@ private:
 	static inline std::vector<Figure*> figures;
 	static inline std::vector<LightSource> light_sources;
 
+	static inline std::vector<Figure*>::size_type current_figure;
+
 	static inline GLint pixel_size;
 	static inline GLubyte recurs_lvl;
 
+	static inline bool figure_selection;
 	static inline bool smoothing;
 	static inline bool ray_tracing;
 };
