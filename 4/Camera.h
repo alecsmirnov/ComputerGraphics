@@ -5,7 +5,7 @@
 
 class Camera {
 public:
-	Camera() : up({0.0f, 1.0f, 0.0f}), speed(0) {}
+	Camera() : up({0.0f, 1.0f, 0.0f}), speed(0.0f) {}
 	Camera(const Vector3f& position, const Vector3f& front, const Vector3f& up, GLfloat speed = 0.0f);
 
 	void setPosition(const Vector3f& position);
