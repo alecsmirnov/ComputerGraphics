@@ -31,9 +31,17 @@ private:
 	static void nextFigure();
 	static void prevFigure();
 	static void changeFigureVisibility();
+	static void nextLight();
+	static void prevLight();
+	static void lightMoveForward();
+	static void lightMoveBack();
+	static void lightMoveLeft();
+	static void lightMoveRight();
+	static void lightMoveUp();
+	static void lightMoveDown();
 	static void increasePixelSize();
 	static void decreasePixelSize();
-	static void figureSelectionSwitch();
+	static void selectionSwitch();
 	static void smoothingSwitch();
 
 	static void drawGrid();
@@ -61,9 +69,10 @@ private:
 	static inline std::vector<LightSource> light_sources;
 
 	static inline std::vector<Figure*>::size_type current_figure;
+	static inline std::vector<LightSource>::size_type current_light;
 	static inline GLint pixel_size;
 
-	static inline bool figure_selection;
+	static inline bool selection;
 	static inline bool smoothing;
 	static inline bool ray_tracing;
 };

@@ -19,8 +19,8 @@ public:
 	GLfloat getSpeed() const;
 
 	void mouseView(GLint width, GLint height);
-	void moveUp();
-	void moveDown();
+	void moveForward();
+	void moveBack();
 	void moveLeft();
 	void moveRight();
 

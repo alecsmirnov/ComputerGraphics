@@ -2,9 +2,13 @@
 
 #include <cmath>
 
-static constexpr GLdouble RADIUS = 0.25;
+static constexpr GLfloat FRAME_FAULT = 0.015f;
+
+static constexpr GLdouble RADIUS = 0.5;
 static constexpr GLint    SLICES = 4;
 static constexpr GLint    STACKS = 2;
+
+static constexpr GLfloat SPEED = 0.5f;
 
 LightSource::LightSource(const Vector3f& position, Color color) {
 	this->position = position;
@@ -27,6 +31,30 @@ Color LightSource::getColor() const {
 	return color;
 }
 
+void LightSource::moveForward() {
+	position.setZ(position.getZ() + SPEED);
+}
+
+void LightSource::moveBack() {
+	position.setZ(position.getZ() - SPEED);
+}
+
+void LightSource::moveLeft() {
+	position.setX(position.getX() + SPEED);
+}
+
+void LightSource::moveRight() {
+	position.setX(position.getX() - SPEED);
+}
+
+void LightSource::moveUp() {
+	position.setY(position.getY() + SPEED);
+}
+
+void LightSource::moveDown() {
+	position.setY(position.getY() - SPEED);
+}
+
 void LightSource::draw() const {
 	GLUquadricObj* quad_obj = gluNewQuadric();
 
@@ -42,21 +70,26 @@ void LightSource::draw() const {
 	gluDeleteQuadric(quad_obj);
 }
 
-void LightSource::rotate(GLfloat angle, const Vector3f& rotate_front) {
-	GLfloat cos_a = std::cosf(angle);
-	GLfloat sin_a = std::sinf(angle);
+void LightSource::drawFrame() const {
+	GLUquadricObj* quad_obj = gluNewQuadric();
 
-	GLfloat new_x = (cos_a + (1 - cos_a) * rotate_front.getX() * rotate_front.getX()) * position.getX() +
-					((1 - cos_a) * rotate_front.getX() * rotate_front.getY() - rotate_front.getZ() * sin_a) * position.getY() +
-					((1 - cos_a) * rotate_front.getX() * rotate_front.getZ() + rotate_front.getY() * sin_a) * position.getZ();
+	glPushMatrix();
+	glTranslated(position.getX(), position.getY(), position.getZ());
 
-	GLfloat new_y = ((1 - cos_a) * rotate_front.getX() * rotate_front.getY() + rotate_front.getZ() * sin_a) * position.getX() +
-					(cos_a + (1 - cos_a) * rotate_front.getY() * rotate_front.getY()) * position.getY() +
-					((1 - cos_a) * rotate_front.getY() * rotate_front.getZ() - rotate_front.getX() * sin_a) * position.getZ();
+	auto frame = [&](GLfloat frame_width, Color frame_color) {
+		glColor3f(frame_color.R, frame_color.G, frame_color.B);
+		glLineWidth(frame_width);
 
-	GLfloat new_z = ((1 - cos_a) * rotate_front.getX() * rotate_front.getZ() - rotate_front.getY() * sin_a) * position.getX() +
-					((1 - cos_a) * rotate_front.getY() * rotate_front.getZ() + rotate_front.getX() * sin_a) * position.getY() +
-					(cos_a + (1 - cos_a) * rotate_front.getZ() * rotate_front.getZ()) * position.getZ();
+		gluQuadricDrawStyle(quad_obj, GLU_LINE);
+		gluSphere(quad_obj, RADIUS * LIGHT_FRAME_COEF + FRAME_FAULT, SLICES, STACKS);
 
-	position.setCoords(new_x, new_y, new_z);
+		glLineWidth(1.0f);
+	};
+
+	frame(LIGHT_INNER_FRAME_WIDTH, LIGHT_INNER_FRAME_COLOR);
+	frame(LIGHT_OUTER_FRAME_WIDTH, LIGHT_OUTER_FRAME_COLOR);
+
+	gluDeleteQuadric(quad_obj);
+
+	glPopMatrix();
 }

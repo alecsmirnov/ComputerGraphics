@@ -36,9 +36,10 @@ Editor::Editor(GLint width, GLint height) {
 	rayTracingFieldResize(width, height);
 
 	current_figure = 0;
+	current_light = 0;
 	pixel_size = 4;
 
-	figure_selection = false;
+	selection = false;
 	smoothing = false;
 	ray_tracing = false;
 }
@@ -322,18 +323,58 @@ void Editor::trace(const Vector3f& position, GLfloat aspect) {
 }
 
 void Editor::nextFigure() {
-	if (figure_selection && 1 < figures.size())
+	if (selection && 1 < figures.size())
 		current_figure = (current_figure + 1) % figures.size();
 }
 
 void Editor::prevFigure() {
-	if (figure_selection && 1 < figures.size())
+	if (selection && 1 < figures.size())
 		current_figure = current_figure == 0 ? figures.size() - 1 : current_figure - 1;
 }
 
 void Editor::changeFigureVisibility() {
-	if (figure_selection && !figures.empty())
+	if (selection && !figures.empty())
 		figures[current_figure]->setVisibility(!figures[current_figure]->getVisibility());
+}
+
+void Editor::nextLight() {
+	if (selection && 1 < light_sources.size())
+		current_light = (current_light + 1) % light_sources.size();
+}
+
+void Editor::prevLight() {
+	if (selection && 1 < light_sources.size())
+		current_light = current_light == 0 ? light_sources.size() - 1 : current_light - 1;
+}
+
+void Editor::lightMoveForward() {
+	if (selection && !light_sources.empty())
+		light_sources[current_light].moveForward();
+}
+
+void Editor::lightMoveBack() {
+	if (selection && !light_sources.empty())
+		light_sources[current_light].moveBack();
+}
+
+void Editor::lightMoveLeft() {
+	if (selection && !light_sources.empty())
+		light_sources[current_light].moveLeft();
+}
+
+void Editor::lightMoveRight() {
+	if (selection && !light_sources.empty())
+		light_sources[current_light].moveRight();
+}
+
+void Editor::lightMoveUp() {
+	if (selection && !light_sources.empty())
+		light_sources[current_light].moveUp();
+}
+
+void Editor::lightMoveDown() {
+	if (selection && !light_sources.empty())
+		light_sources[current_light].moveDown();
 }
 
 void Editor::increasePixelSize() {
@@ -346,9 +387,10 @@ void Editor::decreasePixelSize() {
 		--pixel_size;
 }
 
-void Editor::figureSelectionSwitch() {
-	if (!ray_tracing)
-		figure_selection = !figure_selection;
+void Editor::selectionSwitch() {
+	if (!ray_tracing) {
+		selection = !selection;
+	}
 }
 
 void Editor::smoothingSwitch() {
@@ -382,8 +424,13 @@ void Editor::drawScene() {
 			if (figure->getVisibility())
 				figure->draw();
 
-		if (figure_selection && !figures.empty())
-			figures[current_figure]->drawFrame();
+		if (selection) {
+			if (!figures.empty())
+				figures[current_figure]->drawFrame();
+
+			if (!light_sources.empty())
+				light_sources[current_light].drawFrame();
+		}
 
 		for (auto& light : light_sources)
 			light.draw();
@@ -462,15 +509,27 @@ void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
 		case Q_BUTTON:	   prevFigure();			   break;
 		case E_BUTTON:	   nextFigure();			   break;
 		case R_BUTTON:	   changeFigureVisibility();   break;
-		case W_BUTTON:	   camera.moveUp();			   break;
-		case S_BUTTON:	   camera.moveDown();		   break;
+		case W_BUTTON:	   camera.moveForward();	   break;
+		case S_BUTTON:	   camera.moveBack();		   break;
 		case A_BUTTON:	   camera.moveLeft();		   break;
 		case D_BUTTON:	   camera.moveRight();		   break;
 		case Z_BUTTON:	   decreasePixelSize();		   break;
 		case X_BUTTON:	   increasePixelSize();		   break;
-		case ENTER_BUTTON: smoothingSwitch();		   break;
-		case SPACE_BUTTON: figureSelectionSwitch();	   break;
+
+		case SEVEN_BUTTON: prevLight();				   break;
+		case NINE_BUTTON:  nextLight();				   break;
+		case EIGHT_BUTTON: lightMoveForward();		   break;
+		case FIVE_BUTTON:  lightMoveBack();			   break;
+		case FOUR_BUTTON:  lightMoveLeft();			   break;
+		case SIX_BUTTON:   lightMoveRight();		   break;
+		case TWO_BUTTON:   lightMoveUp();			   break;
+		case ONE_BUTTON:   lightMoveDown();			   break;
+
+		case SPACE_BUTTON: selectionSwitch();		   break;
+		
 		case TAB_BUTTON:   ray_tracing = !ray_tracing; break;
+		case ENTER_BUTTON: smoothingSwitch();		   break;
+
 		case ESC_BUTTON:   glutLeaveMainLoop();		   break;
 		default:;
 	}

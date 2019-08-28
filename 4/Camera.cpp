@@ -66,11 +66,11 @@ void Camera::mouseView(GLint width, GLint height) {
 	}
 }
 
-void Camera::moveUp() {
+void Camera::moveForward() {
 	moveStraight(speed);
 }
 
-void Camera::moveDown() {
+void Camera::moveBack() {
 	moveStraight(-speed);
 }
 
