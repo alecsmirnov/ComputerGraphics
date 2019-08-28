@@ -71,11 +71,6 @@ private:
 	// Уменьшить ширину группы
 	static void groupWidthDec();
 
-	// Прибавить цвет элементу палитры
-	static void groupColorInc(ColorElem color_elem);
-	// Убавить цвет элементу палитры
-	static void groupColorDec(ColorElem color_elem);
-
 	// Изменить тип группы
 	static void groupLineTypeChange();
 
@@ -86,7 +81,7 @@ private:
 	static void setGroupColor(Color color);
 
 private:
-	static inline const std::string window_title = "Line editor";
+	static inline const char* window_title = "Line editor";
 
 	static inline GLint width;
 	static inline GLint height;

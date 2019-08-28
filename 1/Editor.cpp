@@ -1,6 +1,8 @@
 ﻿#include "Editor.h"
 #include "KeyButtons.h"
 
+#include <cctype>
+
 // Шаг изменения координат группы
 static constexpr GLint COORD_STEP = 10;
 
@@ -25,7 +27,7 @@ void Editor::start(int* argc, char* argv[]) {
 	glutInitDisplayMode(GLUT_RGB);			// Установка режима отображения 
 
 	glutInitWindowSize(width, height);		// Размер окна
-	glutCreateWindow(window_title.c_str()); // Создание окна с заголовком
+	glutCreateWindow(window_title); // Создание окна с заголовком
 
 	glutDisplayFunc(displayEvent);			// Установка функции отображения
 	glutReshapeFunc(reshapeEvent);			// Установка функции изменения окна
@@ -43,7 +45,7 @@ Editor::~Editor() {
 
 // Отрисовка группы линий по её номеру
 void Editor::drawGroup(std::vector<Line>::size_type group_num) {
-	glColor3ub(lines[group_num].getColor().R, lines[group_num].getColor().G, lines[group_num].getColor().B);
+	glColor3f(lines[group_num].getColor().R, lines[group_num].getColor().G, lines[group_num].getColor().B);
 	glLineWidth(lines[group_num].getWidth());
 	glLineStipple(2, static_cast<GLushort>(lines[group_num].getType()));
 	smoothing ? glEnable(GL_LINE_SMOOTH) : glDisable(GL_LINE_SMOOTH);
@@ -60,9 +62,9 @@ void Editor::drawGroup(std::vector<Line>::size_type group_num) {
 void Editor::drawCurGroupPoint(std::vector<Point>::size_type point_num, GLfloat point_width) {
 	if (lines[current_group].size()) {
 		glPointSize(lines[current_group].getWidth() + point_width);
-		glColor3ub(lines[current_group].getColor().R, 
-				   lines[current_group].getColor().G, 
-				   lines[current_group].getColor().B);
+		glColor3f(lines[current_group].getColor().R, 
+				  lines[current_group].getColor().G, 
+				  lines[current_group].getColor().B);
 
 		glBegin(GL_POINTS);
 
@@ -108,75 +110,31 @@ void Editor::reshapeEvent(GLint new_width, GLint new_height) {
 
 // Обработка сообщений от клавиатуры
 void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
-	switch (key) {
-		// Добавить новую группу
-		case SPACE_BUTTON: newGroup(); break;
-		// Удалить текущую группу
-		case DEL_BUTTON:   deleteCurGroup();  break;
-		// Удалить последнюю точку
-		case BS_BUTTON:	   deleteCurPoint(); break;
-		// Выбрать предыдущую группу
-		case Q_UPP_BUTTON:
-		case Q_LOW_BUTTON: prevGroup(); break;
-		// Выбрать следующую группу
-		case E_UPP_BUTTON:
-		case E_LOW_BUTTON: nextGroup(); break;
-		// Переместить группу вверх
-		case W_UPP_BUTTON:
-		case W_LOW_BUTTON: changeGroupYCoord(-COORD_STEP); break;
-		// Переместить группу вниз
-		case S_UPP_BUTTON:
-		case S_LOW_BUTTON: changeGroupYCoord(COORD_STEP);  break;
-		// Переместить группу влево
-		case A_UPP_BUTTON:
-		case A_LOW_BUTTON: changeGroupXCoord(-COORD_STEP); break;
-		// Переместить группу вправо
-		case D_UPP_BUTTON:
-		case D_LOW_BUTTON: changeGroupXCoord(COORD_STEP);  break;
-		// Перейти к предыдущей точкв в группе
-		case Z_UPP_BUTTON:
-		case Z_LOW_BUTTON: prevPoint(); break;
-		// Перейти к следующей точке в группе
-		case X_UPP_BUTTON:
-		case X_LOW_BUTTON: nextPoint(); break;
-		// Увеличить ширину группу
-		case PLUS_BUTTON:  groupWidthInc(); break;
-		// Уменьшить ширину группы
-		case MINUS_BUTTON: groupWidthDec(); break;
-		// Прибавить красный цвет группе
-		case R_UPP_BUTTON: groupColorInc(ColorElem::RED); break;
-		// Убавить красный цвет группе
-		case R_LOW_BUTTON: groupColorDec(ColorElem::RED); break;
-		// Прибавить зелёный цвет группе
-		case G_UPP_BUTTON: groupColorInc(ColorElem::GREEN); break;
-		// Убавить зелёный цвет группе
-		case G_LOW_BUTTON: groupColorDec(ColorElem::GREEN); break;
-		// Прибавить синий цвет группе
-		case B_UPP_BUTTON: groupColorInc(ColorElem::BLUE); break;
-		// Убавить синий цвет группе
-		case B_LOW_BUTTON: groupColorDec(ColorElem::BLUE); break;
-		// Изменить тип группы
-		case TAB_BUTTON:   groupLineTypeChange();  break;
-		// Включить, выключить сглаживание
-		case ENTER_BUTTON: smoothingChange(); break;
-		// Изменить цвет группы на красный
-		case ONE_BUTTON:   setGroupColor(getColor(ColorElem::RED)); break;
-		// Изменить цвет группы на оранжевый
-		case TWO_BUTTON:   setGroupColor(getColor(ColorElem::ORANGE)); break;
-		// Изменить цвет группы на жёлтый
-		case THREE_BUTTON: setGroupColor(getColor(ColorElem::YELLOW)); break;
-		// Изменить цвет группы на зелёный
-		case FOUR_BUTTON:  setGroupColor(getColor(ColorElem::GREEN)); break;
-		// Изменить цвет группы на голубой
-		case FIVE_BUTTON:  setGroupColor(getColor(ColorElem::BLUE)); break;
-		// Изменить цвет группы на синий
-		case SIX_BUTTON:   setGroupColor(getColor(ColorElem::DARK_BLUE)); break;
-		// Изменить цвет группы на фиолетовый
-		case SEVEN_BUTTON: setGroupColor(getColor(ColorElem::VIOLET)); break;
-		// Изменить цвет группы на чёрный
-		case EIGHT_BUTTON: setGroupColor(getColor(ColorElem::BLACK)); break;
-		// Выйти из программы
-		case ESC_BUTTON:   exit(0); break;
+	switch (std::tolower(key)) {
+		case SPACE_BUTTON: newGroup(); 							break;	// Добавить новую группу
+		case DEL_BUTTON:   deleteCurGroup();  					break;	// Удалить текущую группу
+		case BS_BUTTON:	   deleteCurPoint(); 					break;	// Удалить последнюю точку
+		case Q_BUTTON: 	   prevGroup();							break;	// Выбрать предыдущую группу
+		case E_BUTTON: 	   nextGroup();							break;	// Выбрать следующую группу
+		case W_BUTTON: 	   changeGroupYCoord(-COORD_STEP);		break;	// Переместить группу вверх
+		case S_BUTTON: 	   changeGroupYCoord(COORD_STEP);		break;	// Переместить группу вниз
+		case A_BUTTON: 	   changeGroupXCoord(-COORD_STEP);		break;	// Переместить группу влево
+		case D_BUTTON: 	   changeGroupXCoord(COORD_STEP);		break;	// Переместить группу вправо
+		case Z_BUTTON: 	   prevPoint();							break;	// Перейти к предыдущей точкв в группе
+		case X_BUTTON:	   nextPoint(); 						break;	// Перейти к следующей точке в группе
+		case EQUAL_BUTTON: groupWidthInc(); 					break;	// Увеличить ширину группу
+		case MINUS_BUTTON: groupWidthDec();						break;	// Уменьшить ширину группы
+		case TAB_BUTTON:   groupLineTypeChange();  				break;	// Изменить тип группы
+		case ENTER_BUTTON: smoothingChange(); 				    break;	// Включить, выключить сглаживание
+		case ONE_BUTTON:   setGroupColor(ColorElem::RED); 	    break;	// Изменить цвет группы на красный
+		case TWO_BUTTON:   setGroupColor(ColorElem::ORANGE);    break;	// Изменить цвет группы на оранжевый
+		case THREE_BUTTON: setGroupColor(ColorElem::YELLOW);    break;	// Изменить цвет группы на жёлтый
+		case FOUR_BUTTON:  setGroupColor(ColorElem::GREEN);     break;	// Изменить цвет группы на зелёный
+		case FIVE_BUTTON:  setGroupColor(ColorElem::BLUE); 	    break;	// Изменить цвет группы на голубой
+		case SIX_BUTTON:   setGroupColor(ColorElem::DARK_BLUE); break;	// Изменить цвет группы на синий
+		case SEVEN_BUTTON: setGroupColor(ColorElem::VIOLET); 	break;	// Изменить цвет группы на фиолетовый
+		case EIGHT_BUTTON: setGroupColor(ColorElem::BLACK); 	break;	// Изменить цвет группы на чёрный
+		case ESC_BUTTON:   glutLeaveMainLoop(); 				break;	// Выйти из программы
 		default:;
 	}
 
@@ -188,7 +146,7 @@ void Editor::mouseEvent(int button, int state, int x, int y) {
 	if (state == GLUT_DOWN) {
 		// Добавить новую точку в текущую группу
 		if (button == GLUT_LEFT_BUTTON) {
-			lines[current_group].pushBack(Point(x, y));
+			lines[current_group].pushBack({x, y});
 			current_point = lines[current_group].size() - 1;
 		}
 
@@ -210,14 +168,14 @@ void Editor::groupChangeMenu(int task) {
 // Пункт меню изменения цвета группы
 void Editor::groupColorMenu(int task) {
 	switch (task) {
-		case 0: setGroupColor(getColor(ColorElem::RED)); break;
-		case 1: setGroupColor(getColor(ColorElem::ORANGE)); break;
-		case 2: setGroupColor(getColor(ColorElem::YELLOW)); break;
-		case 3: setGroupColor(getColor(ColorElem::GREEN)); break;
-		case 4: setGroupColor(getColor(ColorElem::BLUE)); break;
-		case 5: setGroupColor(getColor(ColorElem::DARK_BLUE)); break;
-		case 6: setGroupColor(getColor(ColorElem::VIOLET)); break;
-		case 7: setGroupColor(getColor(ColorElem::BLACK)); break;
+		case 0: setGroupColor(ColorElem::RED); break;
+		case 1: setGroupColor(ColorElem::ORANGE); break;
+		case 2: setGroupColor(ColorElem::YELLOW); break;
+		case 3: setGroupColor(ColorElem::GREEN); break;
+		case 4: setGroupColor(ColorElem::BLUE); break;
+		case 5: setGroupColor(ColorElem::DARK_BLUE); break;
+		case 6: setGroupColor(ColorElem::VIOLET); break;
+		case 7: setGroupColor(ColorElem::BLACK); break;
 		default:;
 	}
 
@@ -432,30 +390,6 @@ void Editor::groupWidthInc() {
 void Editor::groupWidthDec() {
 	if (1 < lines[current_group].getWidth())
 		lines[current_group].setWidth(lines[current_group].getWidth() - 0.5f);
-}
-
-// Прибавить цвет элементу палитры
-void Editor::groupColorInc(ColorElem color_elem) {
-	auto [R, G, B] = lines[current_group].getColor();
-
-	switch (color_elem) {
-		case ColorElem::RED:   if (R < 255) lines[current_group].setColor(R + 5, G, B); break;
-		case ColorElem::GREEN: if (G < 255) lines[current_group].setColor(R, G + 5, B); break;
-		case ColorElem::BLUE:  if (B < 255) lines[current_group].setColor(R, G, B + 5); break;
-		default:;
-	}
-}
-
-// Убавить цвет элементу палитры
-void Editor::groupColorDec(ColorElem color_elem) {
-	auto [R, G, B] = lines[current_group].getColor();
-
-	switch (color_elem) {
-		case ColorElem::RED:   if (R) lines[current_group].setColor(R - 5, G, B); break;
-		case ColorElem::GREEN: if (G) lines[current_group].setColor(R, G - 5, B); break;
-		case ColorElem::BLUE:  if (B) lines[current_group].setColor(R, G, B - 5); break;
-		default:;
-	}
 }
 
 // Изменить тип группы

@@ -2,9 +2,15 @@
 #define LINE_H
 
 #include <vector>
+#include <GL/glut.h>
 
-#include "Point.h"
 #include "Color.h"
+
+// Класс, отвечающий за хранение координат двумерной точки
+struct Point {
+	GLint x;
+	GLint y;
+};
 
 // Тип, представляющий возможные варианты линии
 enum class LineType : GLushort {
@@ -17,7 +23,7 @@ enum class LineType : GLushort {
 // Класс, представляющий контейнер, линию из точек и её характеристики
 class Line {
 public:
-	Line() : color(Color(0, 0, 0)), width(1), type(LineType::SOLID) {}
+	Line() : color(ColorElem::BLACK), width(1), type(LineType::SOLID) {}
 
 	// Получить цвет линии
 	Color getColor() const;
@@ -28,7 +34,7 @@ public:
 
 	// Задать цвет линии
 	void setColor(Color color);
-	void setColor(GLubyte R, GLubyte G, GLubyte B);
+	void setColor(GLfloat R, GLfloat G, GLfloat B);
 	// Задать ширину линии
 	void setWidth(GLfloat width);
 	// Задать тип линии
@@ -40,7 +46,7 @@ public:
 	void popBack();
 
 	// Удалить точку
-	void deletePoint(std::vector<Point>::size_type point_num);
+	void deletePoint(std::vector<POINT>::size_type point_num);
 
 	// Очистить линию
 	void clear();

@@ -21,8 +21,8 @@ void Line::setColor(Color color) {
 }
 
 // Задать цвет линии
-void Line::setColor(GLubyte R, GLubyte G, GLubyte B) { 
-	color = Color(R, G, B); 
+void Line::setColor(GLfloat R, GLfloat G, GLfloat B) { 
+	color = {R, G, B}; 
 }
 
 // Задать ширину линии
@@ -36,7 +36,7 @@ void Line::setType(LineType type) {
 }
 
 // Добавить элемент в конец линии
-void Line::pushBack(Point point) { 
+void Line::pushBack(Point point) {
 	coords.push_back(point); 
 }
 
@@ -83,17 +83,16 @@ Line::const_iterator Line::cend() const noexcept {
 }
 
 // Получить размер линии
-std::vector<Point>::size_type Line::size() const { 
+std::vector<POINT>::size_type Line::size() const {
 	return coords.size(); 
 };
 
 // Перегрузка операции взятия из скобок
-Point& Line::operator[](std::vector<Point>::size_type i) { 
+Point& Line::operator[](std::vector<Point>::size_type i) {
 	return coords[i]; 
 }
 
 // Перегрузка операции присвоения скобкам
-Point Line::operator[](std::vector<Point>::size_type i) const { 
+Point Line::operator[](std::vector<Point>::size_type i) const {
 	return coords[i]; 
 }
-
