@@ -2,10 +2,10 @@
 
 #include <algorithm>
 
-static constexpr uint8_t CELL_SIZE_MIN = 2;		// Минимальный размер клетки поля
-static constexpr uint8_t CELL_SIZE_MAX = 20;	// Максимальный размер клетки поля
+static constexpr std::uint8_t CELL_SIZE_MIN = 2;	// Минимальный размер клетки поля
+static constexpr std::uint8_t CELL_SIZE_MAX = 20;	// Максимальный размер клетки поля
 
-static constexpr GLfloat LINES_WIDTH = 0.5f;	// Ширина ланий сетки
+static constexpr GLfloat LINES_WIDTH = 0.5f;		// Ширина ланий сетки
 
 HexagonRasterisation::RasteredHexagon::RasteredHexagon(std::vector<Point<GLint>> coords, Color color) {
 	this->coords = coords;
@@ -57,9 +57,9 @@ void HexagonRasterisation::printField(std::vector<RasteredHexagon>::size_type cu
 	if (!hexes.empty()) {
 		for (std::vector<RasteredHexagon>::size_type i = 0; i != hexes.size(); ++i)
 			if (i != current_hexagon)
-				printHexagon(i, getColor(ColorElem::BLACK));
+				printHexagon(i, ColorElem::BLACK);
 
-		printHexagon(current_hexagon, getColor(ColorElem::RED));
+		printHexagon(current_hexagon, ColorElem::RED);
 	}
 
 	printGrid();
@@ -96,7 +96,7 @@ HexagonRasterisation::~HexagonRasterisation() {
 }
 
 // Инициализировать сетку поля
-void HexagonRasterisation::initField(uint8_t cell_size) {
+void HexagonRasterisation::initField(std::uint8_t cell_size) {
 	this->cell_size = cell_size;
 
 	field_size.x = width  / cell_size + 1;
@@ -108,8 +108,8 @@ void HexagonRasterisation::initField(uint8_t cell_size) {
 
 	for (GLint i = 0; i != field_size.x; ++i)
 		for (GLint j = 0; j != field_size.y; ++j) {
-			field[i][j].A = { (i - 1) * cell_size, (j - 1) * cell_size };
-			field[i][j].C = {  i * cell_size,		j * cell_size };
+			field[i][j].A = {(i - 1) * cell_size, (j - 1) * cell_size};
+			field[i][j].C = {i * cell_size, j * cell_size};
 		}
 }
 
@@ -123,8 +123,8 @@ void HexagonRasterisation::printHexagon(std::vector<RasteredHexagon>::size_type 
 			if (isInside({ i, j }, hexes[hexagon_num]))
 				setPixel({ i, j }, hexes[hexagon_num].color);
 
-	for (uint8_t i = 0; i != Hexagon::vertex_count; ++i) {
-		uint8_t i_plus = (i + 1) % Hexagon::vertex_count;
+	for (std::uint8_t i = 0; i != Hexagon::vertex_count; ++i) {
+		std::uint8_t i_plus = (i + 1) % Hexagon::vertex_count;
 
 		drawLine(hexes[hexagon_num].coords[i], hexes[hexagon_num].coords[i_plus], border_color);
 	}
@@ -133,7 +133,7 @@ void HexagonRasterisation::printHexagon(std::vector<RasteredHexagon>::size_type 
 		glColor3ub(0, 191, 255);
 
 		glBegin(GL_LINE_LOOP);
-		for (uint8_t i = 0; i != Hexagon::vertex_count; ++i)
+		for (std::uint8_t i = 0; i != Hexagon::vertex_count; ++i)
 			glVertex2i(hexes[hexagon_num].glut_coords[i].x, hexes[hexagon_num].glut_coords[i].y);
 		glEnd();
 	}
@@ -184,7 +184,7 @@ bool HexagonRasterisation::isFieldCell(Point<GLint> point) const {
 
 // Получить точку границы поля
 Point<GLint> HexagonRasterisation::getBorderPoint(Point<GLint> point) const {
-	Point<GLint> border_point = { point.x, point.y };
+	Point<GLint> border_point = {point.x, point.y};
 
 	if (point.x < 0)
 		border_point.x = 1;
@@ -206,26 +206,26 @@ HexagonRasterisation::RasteredHexagon HexagonRasterisation::fromGlutToRaster(con
 	auto coords = hexagon.getCoords();
 
 	auto translate_coords = hexagon.getTranslateCoords();
-	for (uint8_t i = 0; i != Hexagon::vertex_count; ++i)
-		coords[i] = { coords[i].x + translate_coords.x,
-					  coords[i].y + translate_coords.y };
+	for (std::uint8_t i = 0; i != Hexagon::vertex_count; ++i)
+		coords[i] = {coords[i].x + translate_coords.x,
+					 coords[i].y + translate_coords.y};
 
 	const auto PI = std::acos(-1);
 	auto alpha = hexagon.getAngle() * PI / 180;
 
-	Point<GLint> center = { hexagon.getCenter().x + translate_coords.x,
-							hexagon.getCenter().y + translate_coords.y };
+	Point<GLint> center = {hexagon.getCenter().x + translate_coords.x,
+						   hexagon.getCenter().y + translate_coords.y};
 
-	for (uint8_t i = 0; i != Hexagon::vertex_count; ++i) {
+	for (std::uint8_t i = 0; i != Hexagon::vertex_count; ++i) {
 		auto x = static_cast<GLint>((coords[i].x - center.x) *
 				 std::cos(alpha) - (coords[i].y - center.y) * std::sin(alpha) + center.x);
 		auto y = static_cast<GLint>((coords[i].x - center.x) *
 				 std::sin(alpha) + (coords[i].y - center.y) * std::cos(alpha) + center.y);
 
-		coords[i] = { x , y };
+		coords[i] = {x , y};
 	}
 
-	for (uint8_t i = 0; i != Hexagon::vertex_count; ++i)
+	for (std::uint8_t i = 0; i != Hexagon::vertex_count; ++i)
 		if (!isFieldCell(coords[i]))
 			coords[i] = getBorderPoint(coords[i]);
 
@@ -234,7 +234,7 @@ HexagonRasterisation::RasteredHexagon HexagonRasterisation::fromGlutToRaster(con
 
 // Закрасить пиксель
 void HexagonRasterisation::setPixel(Point<GLint> point, Color color) const {
-	glColor3ub(color.R, color.G, color.B);
+	glColor3f(color.R, color.G, color.B);
 
 	glRecti(field[point.x][point.y].A.x, field[point.x][point.y].A.y,
 			field[point.x][point.y].C.x, field[point.x][point.y].C.y);
@@ -271,7 +271,7 @@ void HexagonRasterisation::drawLine(Point<GLint> A, Point<GLint> B, Color color)
 
 // Найти маскимальную координату квадрата, описывающего шестиугольник
 Point<GLint> HexagonRasterisation::findMaxCoord(const RasteredHexagon& hexagon) const {
-	Point<GLint> max = { 0, 0 };
+	Point<GLint> max = {0, 0};
 
 	for (auto point : hexagon.coords) {
 		if (max.x < point.x)
@@ -286,7 +286,7 @@ Point<GLint> HexagonRasterisation::findMaxCoord(const RasteredHexagon& hexagon) 
 
 // Найти минимальную координату квадрата, описывающего шестиугольник
 Point<GLint> HexagonRasterisation::findMinCoord(const RasteredHexagon& hexagon) const {
-	Point<GLint> min = { field_size.x, field_size.y };
+	Point<GLint> min = {field_size.x, field_size.y};
 
 	for (auto point : hexagon.coords) {
 		if (point.x < min.x)
@@ -296,12 +296,12 @@ Point<GLint> HexagonRasterisation::findMinCoord(const RasteredHexagon& hexagon) 
 			min.y = point.y;
 	}
 
-	return { min.x - 1, min.y + 1 };
+	return {min.x - 1, min.y + 1};
 }
 
 // Проверка точек на попадание в сегмент шестиугольника
 bool HexagonRasterisation::onSegment(Point<GLint> p, Point<GLint> q, Point<GLint> r) const {
-	auto result = false;
+	bool result = false;
 
 	if (q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
 		q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y))
@@ -322,44 +322,46 @@ Orientation HexagonRasterisation::getOrientation(Point<GLint> p, Point<GLint> q,
 
 // Проверить точку на пересечение сегмента
 bool HexagonRasterisation::isSegmentIntersect(Point<GLint> p_1, Point<GLint> q_1, Point<GLint> p_2, Point<GLint> q_2) const {
+	bool result = false;
+
 	auto orent_1 = getOrientation(p_1, q_1, p_2);
 	auto orent_2 = getOrientation(p_1, q_1, q_2);
 	auto orent_3 = getOrientation(p_2, q_2, p_1);
 	auto orent_4 = getOrientation(p_2, q_2, q_1);
 
-	if (orent_1 != orent_2 && orent_3 != orent_4)
-		return true;
+	if (orent_1 != orent_2 && orent_3 != orent_4 || 
+		orent_1 == Orientation::COLINEAR && onSegment(p_1, p_2, q_1) ||
+		orent_2 == Orientation::COLINEAR && onSegment(p_1, q_2, q_1) ||
+		orent_3 == Orientation::COLINEAR && onSegment(p_2, p_1, q_2) ||
+		orent_4 == Orientation::COLINEAR && onSegment(p_2, q_1, q_2))
+		result = true;
 
-	if (orent_1 == Orientation::COLINEAR && onSegment(p_1, p_2, q_1))
-		return true;
-	if (orent_2 == Orientation::COLINEAR && onSegment(p_1, q_2, q_1))
-		return true;
-	if (orent_3 == Orientation::COLINEAR && onSegment(p_2, p_1, q_2))
-		return true;
-	if (orent_4 == Orientation::COLINEAR && onSegment(p_2, q_1, q_2))
-		return true;
-
-	return false;
+	return result;
 }
 
 // Проверить, принадлежит ли точка шестиугольнику
 bool HexagonRasterisation::isInside(Point<GLint> point, const RasteredHexagon& hexagon) const {
-	GLint count = 0;
+	bool result = false;
 
 	constexpr GLint INF_X = 100000;
-	Point<GLint> extreme_point = { INF_X, point.y };
+	Point<GLint> extreme_point = {INF_X, point.y};
 
-	for (uint8_t i = 0; i != Hexagon::vertex_count; ++i) {
-		uint8_t next = (i + 1) % Hexagon::vertex_count;
+	GLint count = 0;
+	bool segment_found = false;
+	for (std::uint8_t i = 0; i != Hexagon::vertex_count && !segment_found; ++i) {
+		std::uint8_t next = (i + 1) % Hexagon::vertex_count;
 
 		if (isSegmentIntersect(hexagon.coords[i], hexagon.coords[next], point, extreme_point)) {
-			if (getOrientation(hexagon.coords[i], point, hexagon.coords[next]) == Orientation::COLINEAR)
-				return onSegment(hexagon.coords[i], point, hexagon.coords[next]);
+			if (getOrientation(hexagon.coords[i], point, hexagon.coords[next]) == Orientation::COLINEAR) {
+				result = onSegment(hexagon.coords[i], point, hexagon.coords[next]);
 
-			if (point.y != hexagon.coords[i].y)
+				segment_found = true;
+			}
+
+			if (!segment_found && point.y != hexagon.coords[i].y)
 				count++;
 		}
 	}
 
-	return count % 2 == 1;
+	return segment_found ? result : count % 2 == 1;
 }

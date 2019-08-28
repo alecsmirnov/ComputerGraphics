@@ -2,7 +2,6 @@
 #define BMPTEXTURELOADER_H
 
 #include <vector>
-#include <cstdint>
 #include <GL/freeglut.h>
 
 #include "Point.h"

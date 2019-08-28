@@ -1,4 +1,4 @@
-#include "Editor.h"
+﻿#include "Editor.h"
 #include "KeyButtons.h"
 
 #include <cmath>
@@ -35,7 +35,7 @@ Editor::Editor(GLint width, GLint height) {
 	presentation_view = PresentationView::GLUT;
 
 	pointer_activity = true;
-	pointer_color = getColor(ColorElem::WHITE);
+	pointer_color = ColorElem::WHITE;
 
 	field = new HexagonRasterisation(width, height);
 }
@@ -74,20 +74,18 @@ Editor::~Editor() {
 
 // Инициализация загрузчика текстур
 void Editor::initTextureLoader() {
-	const auto PI = std::acos(-1);
-	const auto angle = PI / Hexagon::vertex_count;
+	const auto angle = std::acos(-1) / Hexagon::vertex_count;
 
 	std::vector<Point<GLfloat>> texture_coords(Hexagon::vertex_count);
 
-	texture_coords[0] = { 0.5f, 1.0f };
-	texture_coords[1] = { 0.5f + 0.5f * static_cast<GLfloat>(std::cos(angle)), 0.75f };
-	texture_coords[2] = { 0.5f + 0.5f * static_cast<GLfloat>(std::cos(angle)), 0.25f };
-	texture_coords[3] = { 0.5f, 0.0f };
-	texture_coords[4] = { 0.5f - 0.5f * static_cast<GLfloat>(std::cos(angle)), 0.25f };
-	texture_coords[5] = { 0.5f - 0.5f * static_cast<GLfloat>(std::cos(angle)), 0.75f };
+	texture_coords[0] = {0.5f, 1.0f};
+	texture_coords[1] = {0.5f + 0.5f * static_cast<GLfloat>(std::cos(angle)), 0.75f};
+	texture_coords[2] = {0.5f + 0.5f * static_cast<GLfloat>(std::cos(angle)), 0.25f};
+	texture_coords[3] = {0.5f, 0.0f};
+	texture_coords[4] = {0.5f - 0.5f * static_cast<GLfloat>(std::cos(angle)), 0.25f};
+	texture_coords[5] = {0.5f - 0.5f * static_cast<GLfloat>(std::cos(angle)), 0.75f};
 
 	texture_loader.setCoordnates(texture_coords);
-
 	texture_loader.initAddedTextures();
 
 	auto textures = texture_loader.getTextures();
@@ -129,11 +127,13 @@ void Editor::displayEvent() {
 			glDisable(GL_LINE_SMOOTH);
 			glDisable(GL_POLYGON_SMOOTH);
 			glDisable(GL_POINT_SMOOTH);
+
 			break;
 		}
 		case PresentationView::RASTER: {
 			field->setHexes(hexes);
 			field->printField(current_hexagon);
+
 			break;
 		}
 	}
@@ -146,20 +146,20 @@ void Editor::displayEvent() {
 // Обработка сообщений от клавиатуры
 void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
 	switch (std::tolower(key)) {
-		case ONE_BUTTON:   changeObjectColor(ColorElem::WHITE);	    break;
-		case TWO_BUTTON:   changeObjectColor(ColorElem::RED);	    break;
-		case THREE_BUTTON: changeObjectColor(ColorElem::ORANGE);	break;
-		case FOUR_BUTTON:  changeObjectColor(ColorElem::YELLOW);	break;
-		case FIVE_BUTTON:  changeObjectColor(ColorElem::GREEN);	    break;
-		case SIX_BUTTON:   changeObjectColor(ColorElem::BLUE);	    break;
-		case SEVEN_BUTTON: changeObjectColor(ColorElem::DARK_BLUE); break;
-		case EIGHT_BUTTON: changeObjectColor(ColorElem::VIOLET);	break;
-		case NINE_BUTTON:  changeObjectColor(ColorElem::BLACK);	    break;
-		case ZERO_BUTTON:  color_operation = ColorOperation::NONE;  break;
-		case MINUS_BUTTON: color_operation = ColorOperation::AND;   break;
-		case EQUAL_BUTTON: color_operation = ColorOperation::NAND;  break;
-		case Q_BUTTON:	   prevHexagon(); break;
-		case E_BUTTON:	   nextHexagon(); break;
+		case ONE_BUTTON:   changeObjectColor(ColorElem::WHITE);			 break;
+		case TWO_BUTTON:   changeObjectColor(ColorElem::RED);			 break;
+		case THREE_BUTTON: changeObjectColor(ColorElem::ORANGE);		 break;
+		case FOUR_BUTTON:  changeObjectColor(ColorElem::YELLOW);		 break;
+		case FIVE_BUTTON:  changeObjectColor(ColorElem::GREEN);			 break;
+		case SIX_BUTTON:   changeObjectColor(ColorElem::BLUE);			 break;
+		case SEVEN_BUTTON: changeObjectColor(ColorElem::DARK_BLUE);		 break;
+		case EIGHT_BUTTON: changeObjectColor(ColorElem::VIOLET);		 break;
+		case NINE_BUTTON:  changeObjectColor(ColorElem::BLACK);			 break;
+		case ZERO_BUTTON:  color_operation = ColorOperation::NONE;		 break;
+		case MINUS_BUTTON: color_operation = ColorOperation::AND;		 break;
+		case EQUAL_BUTTON: color_operation = ColorOperation::NAND;		 break;
+		case Q_BUTTON:	   prevHexagon();								 break;
+		case E_BUTTON:	   nextHexagon();								 break;
 		case W_BUTTON:	   moveCurrentHexagonYAxis(HEXAGON_MOVE_STEP);   break;
 		case S_BUTTON:	   moveCurrentHexagonYAxis(-HEXAGON_MOVE_STEP);  break;
 		case A_BUTTON:	   moveCurrentHexagonXAxis(-HEXAGON_MOVE_STEP);  break;
@@ -168,13 +168,13 @@ void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
 		case X_BUTTON:	   scaleCurrentHexagon(HEXAGON_SCALE_FACTOR);    break;
 		case C_BUTTON:	   rotateCurrentHexagon(-HEXAGON_ROTATE_DEGREE); break;
 		case V_BUTTON:	   rotateCurrentHexagon(HEXAGON_ROTATE_DEGREE);  break;
-		case SPACE_BUTTON: changeCurrentHexagonTexture(); break;
-		case ENTER_BUTTON: changePresentationView();	  break;
-		case R_BUTTON:	   field->increaseGrid();   break;
-		case F_BUTTON:	   field->decreaseGrid();   break;
-		case DEL_BUTTON:   deleteCurrentHexagon();  break;
-		case ESC_BUTTON:   pointer_activity = true; break;
-		case TAB_BUTTON:   smoothing = !smoothing;  break;
+		case SPACE_BUTTON: changeCurrentHexagonTexture();				 break;
+		case ENTER_BUTTON: changePresentationView();					 break;
+		case R_BUTTON:	   field->increaseGrid();						 break;
+		case F_BUTTON:	   field->decreaseGrid();						 break;
+		case DEL_BUTTON:   deleteCurrentHexagon();						 break;
+		case ESC_BUTTON:   pointer_activity = true;						 break;
+		case TAB_BUTTON:   smoothing = !smoothing;						 break;
 		default:; 
 	}
 
@@ -209,12 +209,12 @@ void Editor::mouseEvent(int button, int state, int x, int y) {
 // Обработка левого клика мыши
 void Editor::clickEvent(int x, int y) {
 	if (pointer_activity) {
-		pointer = Point<GLint>(x, y);
+		pointer = {x, y};
 		pointer_activity = false;
 	}
 	else {
 		if (pointer.x != x && pointer.y != y) {
-			hexes.push_back({ pointer, Point<GLint>(x, y), pointer_color });
+			hexes.push_back({pointer, {x, y}, pointer_color});
 			current_hexagon = hexes.size() - 1;
 		}
 
@@ -345,7 +345,7 @@ void Editor::menuEvent() {
 void Editor::drawVertices(GLenum mode, const Hexagon& hexagon) {
 	glBegin(mode);
 
-	for (uint8_t i = 0; i != hexagon.size(); ++i)
+	for (std::uint8_t i = 0; i != hexagon.size(); ++i)
 		glVertex2i(hexagon[i].x, hexagon[i].y);
 
 	glEnd();
@@ -357,7 +357,7 @@ void Editor::drawPolygon(std::vector<Hexagon>::size_type hex_number) {
 
 	if (texture == 0) {
 		auto color = hexes[hex_number].getColor();
-		glColor3ub(color.R, color.G, color.B);
+		glColor3f(color.R, color.G, color.B);
 
 		drawVertices(GL_POLYGON, hexes[hex_number]);
 	}
@@ -365,12 +365,12 @@ void Editor::drawPolygon(std::vector<Hexagon>::size_type hex_number) {
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texture);
 
-		glColor3ub(255, 255, 255);
+		glColor3f(1.0f, 1.0f, 1.0f);
 
 		glBegin(GL_POLYGON);
 
 		auto texture_coords = texture_loader.getCoordinates();
-		for (uint8_t i = 0; i != hexes[hex_number].size(); ++i) {
+		for (std::uint8_t i = 0; i != hexes[hex_number].size(); ++i) {
 			glTexCoord2f(texture_coords[i].x, texture_coords[i].y);
 			glVertex2i(hexes[hex_number][i].x, hexes[hex_number][i].y);
 		}
@@ -398,9 +398,11 @@ void Editor::drawHexagon(std::vector<Hexagon>::size_type hex_number) {
 	drawPolygon(hex_number);
 
 	glDisable(GL_COLOR_LOGIC_OP);
+
 	glLineWidth(BORDER_WIDTH);
-	glColor3ub(0, 0, 0);
+	glColor3f(0.0f, 0.0f, 0.0f);
 	drawVertices(GL_LINE_LOOP, hexes[hex_number]);
+
 	glEnable(GL_COLOR_LOGIC_OP);
 
 	glPopMatrix();
@@ -423,20 +425,22 @@ void Editor::drawCurrentHexagon() {
 		drawPolygon(current_hexagon);
 
 		glDisable(GL_COLOR_LOGIC_OP);
+
 		if (!pointer_activity) {
 			glLineWidth(BORDER_WIDTH);
-			glColor3ub(0, 0, 0);
+			glColor3f(0.0f, 0.0f, 0.0f);
 			drawVertices(GL_LINE_LOOP, hexes[current_hexagon]);
 		}
 		else {
 			glLineWidth(SELECTED_EXTERN_BORDER_WIDTH);
-			glColor3ub(0, 0, 0);
+			glColor3f(0.0f, 0.0f, 0.0f);
 			drawVertices(GL_LINE_LOOP, hexes[current_hexagon]);
 
 			glLineWidth(SELECTED_INTERN_BORDER_WIDTH);
-			glColor3ub(204, 0, 0);
+			glColor3f(0.8f, 0.0f, 0.0f);
 			drawVertices(GL_LINE_LOOP, hexes[current_hexagon]);
 		}
+
 		glEnable(GL_COLOR_LOGIC_OP);
 
 		glPopMatrix();
@@ -447,7 +451,8 @@ void Editor::drawCurrentHexagon() {
 void Editor::drawPointer() {
 	if (!pointer_activity) {
 		glDisable(GL_COLOR_LOGIC_OP);
-		glColor3ub(0, 0, 0);
+
+		glColor3f(0.0f, 0.0f, 0.0f);
 		glPointSize(POINTER_EXTERN_BORDER_WIDTH);
 
 		glBegin(GL_POINTS);
@@ -455,12 +460,13 @@ void Editor::drawPointer() {
 		glEnd();
 
 		glEnable(GL_COLOR_LOGIC_OP);
+
 		switch (color_operation) {
 			case ColorOperation::AND:  glLogicOp(GL_OR);  break;
 			case ColorOperation::NAND: glLogicOp(GL_NOR); break;
 		}
 
-		glColor3ub(pointer_color.R, pointer_color.G, pointer_color.B);
+		glColor3f(pointer_color.R, pointer_color.G, pointer_color.B);
 		glPointSize(POINTER_INTERN_BORDER_WIDTH);
 
 		glBegin(GL_POINTS);
@@ -504,14 +510,14 @@ void Editor::rotateCurrentHexagon(GLfloat degrees) {
 void Editor::moveCurrentHexagonXAxis(GLint step) {
 	auto current_coords = hexes[current_hexagon].getTranslateCoords();
 
-	hexes[current_hexagon].setTranslateCoords(Point<GLint>(current_coords.x + step, current_coords.y));
+	hexes[current_hexagon].setTranslateCoords({current_coords.x + step, current_coords.y});
 }
 
 // Сдвинуть по оси Y текущий шестиугольник
 void Editor::moveCurrentHexagonYAxis(GLint step) {
 	auto current_coords = hexes[current_hexagon].getTranslateCoords();
 
-	hexes[current_hexagon].setTranslateCoords(Point<GLint>(current_coords.x, current_coords.y + step));
+	hexes[current_hexagon].setTranslateCoords({current_coords.x, current_coords.y + step});
 }
 
 // Изменить масштаб текущего шестиугольника
@@ -527,17 +533,15 @@ void Editor::changeCurrentHexagonTexture() {
 	if (!hexes.empty()) {
 		auto textures = texture_loader.getTextures();
 		auto pos = std::distance(textures.begin(), 
-				   std::find(textures.begin(), textures.end(), 
-							 hexes[current_hexagon].getTexture()));
+								 std::find(textures.begin(), textures.end(), 
+										   hexes[current_hexagon].getTexture()));
 
 		hexes[current_hexagon].setTexture(textures[(pos + 1) % textures.size()]);
 	}
 }
 
 // Изменить цвет объекта (шестиугольник или указатель)
-void Editor::changeObjectColor(ColorElem color_elem) {
-	Color color = pointer_color = getColor(color_elem);
-
+void Editor::changeObjectColor(Color color) {
 	if (pointer_activity)
 		hexes[current_hexagon].setColor(color);
 	else

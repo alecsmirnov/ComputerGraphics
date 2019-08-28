@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <cstdint>
-#include <GL/freeglut.h>
 
 #include "Color.h"
 #include "Point.h"
@@ -69,7 +68,7 @@ public:
 	// Перегрузка операции присвоения скобкам
 	Point<GLint> operator[](std::uint8_t i) const;
 
-	static constexpr uint8_t vertex_count = 6;
+	static constexpr std::uint8_t vertex_count = 6;
 
 private:
 	hexagon_t coords;

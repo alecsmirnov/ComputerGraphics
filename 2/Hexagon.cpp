@@ -2,12 +2,12 @@
 
 #include <cmath>
 
-static constexpr std::uint8_t N = 6;
+const auto PI_D = std::acos(-1);
 
 Hexagon::Hexagon(Point<GLint> center, Point<GLint> vertex) {
 	calcCoordinates(center, vertex);
 	angle = 0.0f;
-	translate_coords = Point<GLint>(0, 0);
+	translate_coords = {0, 0};
 	scale = 1.0f;
 	texture = 0;
 }
@@ -15,7 +15,7 @@ Hexagon::Hexagon(Point<GLint> center, Point<GLint> vertex) {
 Hexagon::Hexagon(Point<GLint> center, Point<GLint> vertex, Color color) {
 	calcCoordinates(center, vertex);
 	angle = 0.0f;
-	translate_coords = Point(0, 0);
+	translate_coords = {0, 0};
 	scale = 1.0f;
 
 	this->color = color;
@@ -25,7 +25,7 @@ Hexagon::Hexagon(Point<GLint> center, Point<GLint> vertex, Color color) {
 Hexagon::Hexagon(std::vector<Point<GLint>> coords, Color color) {
 	this->coords = coords;
 	angle = 0.0f;
-	translate_coords = Point(0, 0);
+	translate_coords = {0, 0};
 	scale = 1.0f;
 
 	this->color = color;
@@ -79,7 +79,7 @@ GLfloat Hexagon::getScale() const {
 
 // Получить координату центра
 Point<GLint> Hexagon::getCenter() const {
-	return Point((coords[0].x + coords[3].x) / 2, (coords[0].y + coords[3].y) / 2);
+	return {(coords[0].x + coords[3].x) / 2, (coords[0].y + coords[3].y) / 2};
 }
 
 // Получить цвет
@@ -98,18 +98,16 @@ Hexagon::~Hexagon() {
 
 // Расчитать координаты по центральной точки и точке радиуса
 void Hexagon::calcCoordinates(Point<GLint> center, Point<GLint> vertex) {
-	const auto PI = std::acos(-1);
-
 	double R = std::sqrt(std::pow((vertex.x - center.x), 2) + std::pow((vertex.y - center.y), 2));
 	double vertex_alpha = std::atan(static_cast<double>(vertex.x - center.x) / (vertex.y - center.y));
 
-	for (uint8_t i = 0; i != vertex_count; ++i) {
-		double angle = 2 * PI * i / N;
+	for (std::uint8_t i = 0; i != vertex_count; ++i) {
+		double angle = 2 * PI_D * i / vertex_count;
 
 		double x = center.x + R * std::sin(vertex_alpha + angle);
 		double y = center.y + R * std::cos(vertex_alpha + angle);
 
-		coords.push_back(Point(static_cast<GLint>(x), static_cast<GLint>(y)));
+		coords.push_back({static_cast<GLint>(x), static_cast<GLint>(y)});
 	}
 }
 

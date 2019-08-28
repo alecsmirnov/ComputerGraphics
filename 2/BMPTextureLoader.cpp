@@ -1,10 +1,9 @@
-﻿#define _CRT_SECURE_NO_WARNINGS
-#include "BMPTextureLoader.h"
+﻿#include "BMPTextureLoader.h"
 
 #include <iostream>
 
-static constexpr uint8_t IMAGE_HEADER_SIZE = 54;	// Размер заголовка BMP файла
-static constexpr uint8_t RGB_CMPONENT = 3;
+static constexpr GLint IMAGE_HEADER_SIZE = 54;	// Размер заголовка BMP файла
+static constexpr GLint RGB_CMPONENT = 3;
 
 // Установка координат текстур
 void TextureLoader::setCoordnates(std::vector<Point<GLfloat>> texture_coords) {
@@ -38,9 +37,8 @@ void TextureLoader::initAddedTextures() {
 
 	glGenTextures(textures_name.size(), loaded_textures);
 
-	for (uint8_t i = 0; i != textures_name.size(); ++i) {
-		FILE* fp;
-		if (fp = fopen(textures_name[i], "rb")) {
+	for (std::vector<const char*>::size_type i = 0; i != textures_name.size(); ++i)
+		if (FILE* fp; fp = fopen(textures_name[i], "rb")) {
 			GLubyte header[IMAGE_HEADER_SIZE];
 
 			if (fread(header, 1, IMAGE_HEADER_SIZE, fp) == IMAGE_HEADER_SIZE && header[0] == 'B' && header[1] == 'M') {
@@ -50,12 +48,12 @@ void TextureLoader::initAddedTextures() {
 				data[i] = new GLubyte[width * height * RGB_CMPONENT];
 				fread(data[i], width * height * RGB_CMPONENT, 1, fp);
 
-				fclose(fp);
-
 				glBindTexture(GL_TEXTURE_2D, loaded_textures[i]);
 				gluBuild2DMipmaps(GL_TEXTURE_2D, RGB_CMPONENT, width, height, GL_BGR_EXT, GL_UNSIGNED_BYTE, data[i]);
 
 				textures.push_back(loaded_textures[i]);
+
+				fclose(fp);
 
 				delete[] data[i];
 			}
@@ -64,7 +62,6 @@ void TextureLoader::initAddedTextures() {
 		}
 		else
 			std::cerr << "Error: image can't open!" << std::endl;
-	}
 
 	delete loaded_textures;
 	delete[] data;

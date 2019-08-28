@@ -1,9 +1,6 @@
 ﻿#ifndef HEXAGONRASTERISATION_H
 #define HEXAGONRASTERISATION_H
 
-#include <vector>
-#include <GL/freeglut.h>
-
 #include "Hexagon.h"
 
 // Порядок закраски растеризованного шестиугольника
@@ -105,7 +102,7 @@ public:
 	Pixel** field;
 	Point<GLint> field_size;
 
-	uint8_t cell_size;
+	std::uint8_t cell_size;
 
 	std::vector<RasteredHexagon> hexes;
 

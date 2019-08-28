@@ -1,10 +1,8 @@
 ﻿#ifndef EDITOR_H
 #define EDITOR_H
 
-#include <vector>
 #include <GL/freeglut.h>
 
-#include "Hexagon.h"
 #include "BMPTextureLoader.h"
 #include "HexagonRasterisation.h"
 
@@ -83,7 +81,7 @@ private:
 	static void changeCurrentHexagonTexture();
 
 	// Изменить цвет объекта (шестиугольник или указатель)
-	static void changeObjectColor(ColorElem color_elem);
+	static void changeObjectColor(Color color);
 
 	// Изменить режим отображения (обычный или растр)
 	static void changePresentationView();
@@ -103,7 +101,7 @@ private:
 	};
 
 private:
-	static inline const char* window_title = "Hexagon editor";
+	static inline const char* window_title = "Hexagon rasterization";
 
 	static inline GLint width;
 	static inline GLint height;
