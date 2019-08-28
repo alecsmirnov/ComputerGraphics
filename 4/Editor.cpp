@@ -506,15 +506,14 @@ void Editor::reshapeEvent(GLint new_width, GLint new_height) {
 
 void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
 	switch (std::tolower(key)) {
-		case Q_BUTTON:	   prevFigure();			   break;
-		case E_BUTTON:	   nextFigure();			   break;
-		case R_BUTTON:	   changeFigureVisibility();   break;
 		case W_BUTTON:	   camera.moveForward();	   break;
 		case S_BUTTON:	   camera.moveBack();		   break;
 		case A_BUTTON:	   camera.moveLeft();		   break;
 		case D_BUTTON:	   camera.moveRight();		   break;
-		case Z_BUTTON:	   decreasePixelSize();		   break;
-		case X_BUTTON:	   increasePixelSize();		   break;
+
+		case Q_BUTTON:	   prevFigure();			   break;
+		case E_BUTTON:	   nextFigure();			   break;
+		case R_BUTTON:	   changeFigureVisibility();   break;
 
 		case SEVEN_BUTTON: prevLight();				   break;
 		case NINE_BUTTON:  nextLight();				   break;
@@ -529,6 +528,8 @@ void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
 		
 		case TAB_BUTTON:   ray_tracing = !ray_tracing; break;
 		case ENTER_BUTTON: smoothingSwitch();		   break;
+		case Z_BUTTON:	   decreasePixelSize();		   break;
+		case X_BUTTON:	   increasePixelSize();		   break;
 
 		case ESC_BUTTON:   glutLeaveMainLoop();		   break;
 		default:;
