@@ -37,7 +37,9 @@ private:
 	static void smoothingSwitch();
 
 	static void drawGrid();
+	static void drawScene();
 
+	static void modelViewSwitch();
 	static void rayTracingFieldResize(GLint new_width, GLint new_height);
 	static void rayTracingFieldDelete();
 

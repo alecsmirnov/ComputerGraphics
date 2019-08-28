@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-static constexpr GLdouble RADIUS = 0.5;
+static constexpr GLdouble RADIUS = 0.25;
 static constexpr GLint    SLICES = 4;
 static constexpr GLint    STACKS = 2;
 

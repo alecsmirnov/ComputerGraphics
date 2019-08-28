@@ -158,8 +158,8 @@ void Editor::readLightSourcesFile(std::string filename) {
 bool Editor::isShadow(Ray ray) {
 	bool hit = false;
 
-	for (auto i = figures.begin(); i != figures.end() && !hit; ++i)
-		if ((*i)->getVisibility() && (*i)->isSimpleHit(ray))
+	for (auto figure = figures.begin(); figure != figures.end() && !hit; ++figure)
+		if ((*figure)->getVisibility() && (*figure)->isSimpleHit(ray))
 			hit = true;
 
 	return hit;
@@ -202,8 +202,8 @@ Color Editor::getShadeColor(Ray ray) {
 		GLfloat eps = 0.0001f;
 		Ray shadow_ray = {first_collision.position - ray.front * eps, {}, 1};
 
-		for (std::vector<LightSource>::size_type i = 0; i != light_sources.size(); ++i) {
-			auto light_color = light_sources[i].getColor();
+		for (auto light = light_sources.begin(); light != light_sources.end(); ++light) {
+			auto light_color = light->getColor();
 
 			Color ambient_color = {obj_material.ambient.R * light_color.R, 
 								   obj_material.ambient.G * light_color.G, 
@@ -211,7 +211,7 @@ Color Editor::getShadeColor(Ray ray) {
 
 			color = {color.R + ambient_color.R, color.G + ambient_color.G, color.B + ambient_color.B};
 
-			shadow_ray.front = light_sources[i].getPosition() - first_collision.position;
+			shadow_ray.front = light->getPosition() - first_collision.position;
 
 			if (!isShadow(shadow_ray)) {
 				auto source = normalize(shadow_ray.front);
@@ -372,6 +372,43 @@ void Editor::drawGrid() {
 	}
 }
 
+void Editor::drawScene() {
+	if (ray_tracing)
+		trace(camera.getPosition(), static_cast<GLfloat>(width / height));
+	else {
+		drawGrid();
+
+		for (auto& figure : figures)
+			if (figure->getVisibility())
+				figure->draw();
+
+		if (figure_selection && !figures.empty())
+			figures[current_figure]->drawFrame();
+
+		for (auto& light : light_sources)
+			light.draw();
+	}
+}
+
+void Editor::modelViewSwitch() {
+	if (ray_tracing) {
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluOrtho2D(0, width, 0, height);
+	}
+	else {
+		glViewport(0, 0, width, height);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(60.0, width / height, 0.1, GRID_SIZE * 2.0f);
+		glMatrixMode(GL_MODELVIEW);
+	}
+
+	glutPostRedisplay();
+}
+
 void Editor::rayTracingFieldResize(GLint new_width, GLint new_height) {
 	rayTracingFieldDelete();
 
@@ -407,25 +444,8 @@ void Editor::displayEvent() {
 			  camera_front.getX(), camera_front.getY(), camera_front.getZ(),
 			  camera_up.getX(),    camera_up.getY(),    camera_up.getZ());
 
-	reshapeEvent(width, height);
-
-	if (ray_tracing)
-		trace(camera.getPosition(), static_cast<GLfloat>(width / height));
-	else {
-		for (auto& figure : figures)
-			if (figure->getVisibility())
-				figure->draw();
-
-		if (figure_selection && !figures.empty())
-				figures[current_figure]->drawFrame();
-
-		drawGrid();
-	}
-
-	for (auto& light : light_sources)
-		light.draw();
-
-	glutPostRedisplay();
+	modelViewSwitch();
+	drawScene();
 
 	glutSwapBuffers();
 	glFinish();
@@ -434,20 +454,7 @@ void Editor::displayEvent() {
 void Editor::reshapeEvent(GLint new_width, GLint new_height) {
 	rayTracingFieldResize(new_width, new_height);
 
-	if (ray_tracing) {
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluOrtho2D(0, width, 0, height);
-	}
-	else {
-		glViewport(0, 0, width, height);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluPerspective(60.0, width / height, 0.1, GRID_SIZE * 2.0f);
-		glMatrixMode(GL_MODELVIEW);
-	}
+	modelViewSwitch();
 }
 
 void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
