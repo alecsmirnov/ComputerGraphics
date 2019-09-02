@@ -12,12 +12,12 @@ static constexpr GLfloat POINTS_SIZE  = 3.0f;
 static constexpr Color   SPLINE_COLOR = ColorElem::BLUE;
 
 static constexpr std::uint8_t DEGREE_MIN = 1;
-static constexpr std::uint8_t DEGREE_MAX = 10;
+static constexpr std::uint8_t DEGREE_MAX = 8;
 
 static constexpr GLdouble STEP_MIN = 0.00001;
 static constexpr GLdouble STEP_MAX = 0.1;
 
-static constexpr GLint	 SHIFT_SPEED  = 10;
+static constexpr GLint	 SHIFT_SPEED  = 15;
 static constexpr GLfloat SCALE_FACTOR = 0.1f;
 
 Editor::Editor(GLint width, GLint height) { 
@@ -39,6 +39,7 @@ void Editor::start(int* argc, char* argv[]) {
 	glutReshapeFunc(reshapeEvent);
 	glutKeyboardFunc(keyboardEvent);
 	glutMouseFunc(mouseEvent);
+	glutMouseWheelFunc(mouseWheelEvent);
 
 	glutMainLoop();
 }
@@ -50,11 +51,12 @@ Editor::~Editor() {
 void Editor::displayEvent() {
 	glClearColor(BACKGROUND_COLOR.R, BACKGROUND_COLOR.G, BACKGROUND_COLOR.B, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
+	glEnable(GL_POINT_SMOOTH);
 
 	glLoadIdentity();
+	glScalef(scale, scale, 0.0f);
 	glTranslated(shift.x, shift.y, 0);
-	//glScalef(scale, scale, 0.0f);
-	
+
 	std::vector<BSpline::Point>::size_type degree = 3;
 	double step = 0.01;
 
@@ -73,19 +75,17 @@ void Editor::reshapeEvent(GLint new_width, GLint new_height) {
 	glLoadIdentity();
 	gluOrtho2D(0.0, width, 0.0, height);
 	glMatrixMode(GL_MODELVIEW);	
-
-	glutPostRedisplay();
 }
 
 void Editor::keyboardEvent(std::uint8_t key, int x, int y) {
 	switch (std::tolower(key)) {
-		case W_BUTTON: shift.y += SHIFT_SPEED; break;
-		case S_BUTTON: shift.y -= SHIFT_SPEED; break;
-		case A_BUTTON: shift.x -= SHIFT_SPEED; break;
-		case D_BUTTON: shift.x += SHIFT_SPEED; break;
+		case W_BUTTON:	 shift.y += SHIFT_SPEED; break;
+		case S_BUTTON:	 shift.y -= SHIFT_SPEED; break;
+		case A_BUTTON:	 shift.x -= SHIFT_SPEED; break;
+		case D_BUTTON:	 shift.x += SHIFT_SPEED; break;
 
-		case Q_BUTTON: scale -= SCALE_FACTOR;  break;
-		case E_BUTTON: scale += SCALE_FACTOR;  break;
+		case ESC_BUTTON: glutLeaveMainLoop();	 break;
+		default:;
 	}
 
 	glutPostRedisplay();
@@ -95,6 +95,15 @@ void Editor::mouseEvent(int button, int state, int x, int y) {
 	if (state == GLUT_DOWN)
 		if (button == GLUT_LEFT_BUTTON)
 			points.push_back({x, height - y});
+
+	glutPostRedisplay();
+}
+
+void Editor::mouseWheelEvent(int button, int dir, int x, int y) {
+	if (0 < dir)
+		scale += SCALE_FACTOR;
+	else
+		scale -= SCALE_FACTOR;
 
 	glutPostRedisplay();
 }
