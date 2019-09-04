@@ -3,7 +3,6 @@
 
 #include <cstdint>
 
-// Клавиши управления редактором
 static constexpr std::uint8_t SPACE_BUTTON = 32;
 static constexpr std::uint8_t DEL_BUTTON   = 127;
 static constexpr std::uint8_t BS_BUTTON	   = 8;
