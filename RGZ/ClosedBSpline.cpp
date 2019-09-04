@@ -1,6 +1,6 @@
-﻿#include "BSpline.h"
+﻿#include "ClosedBSpline.h"
 
-namespace BSpline {
+namespace ClosedBSpline {
 
 static constexpr double PARTITION_MIN = 0.0;
 static constexpr double PARTITION_MAX = 1.0;
@@ -9,7 +9,7 @@ static double divCheck(double x, double y) {
 	return y == 0 ? 0 : x / y;
 }
 
-static double blend(const std::vector<double>& knot, double x, std::vector<Point>::size_type i, std::vector<Point>::size_type degree) {
+static double blend(const std::vector<double>& knot, double x, std::vector<Point>::size_type i, std::uint8_t degree) {
 	double result = 0;
 
 	if (degree == 0)
@@ -34,18 +34,18 @@ static std::vector<double> linSpace(double start, double stop, std::vector<Point
 	return line;
 }
 
-static std::vector<double> getClosedKnot(std::vector<Point>::size_type points_count, std::vector<Point>::size_type degree) {
+static std::vector<double> getClosedKnot(std::vector<Point>::size_type points_count, std::uint8_t degree) {
 	double sector = points_count - degree;
 
 	return linSpace(-static_cast<double>(degree) / sector, static_cast<double>(points_count) / sector, points_count + degree + 1);
 }
 
-std::vector<Point> calculate(const std::vector<Point>& points, std::vector<Point>::size_type degree, double step) {
+std::vector<Point> calculate(const std::vector<Point>& points, std::uint8_t degree, double step) {
 	std::vector<Point> spline_points;
 
 	if (degree < points.size()) {
 		auto control_points = points;
-		for (std::vector<Point>::size_type i = 0; i != degree; ++i)
+		for (std::uint8_t i = 0; i != degree; ++i)
 			control_points.push_back(control_points[i]);
 
 		auto knot = getClosedKnot(control_points.size(), degree);
