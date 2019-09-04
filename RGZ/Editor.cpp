@@ -6,6 +6,9 @@
 
 static constexpr ClosedBSpline::Point INFO_SHIFT = {4, -12};
 
+static constexpr std::uint8_t PRECISION	   = 2;
+static constexpr GLfloat	  NUMBERS_COEF = 0.01f;
+
 Editor::Editor(GLint width, GLint height) { 
 	this->width = width; 
 	this->height = height;
@@ -50,6 +53,7 @@ void Editor::displayEvent() {
 	drawPoints();
 	drawSpline();
 
+	glDisable(GL_POINT_SMOOTH);
 	glFinish();
 }
 
@@ -120,17 +124,21 @@ void Editor::drawInfo() {
 	drawText("Degree: " + std::to_string(degree), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y);
 	drawText("Step: " + removeTrailingZeroes(step), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y * 2);
 
+	drawText("Scale: " + floatToString(scale_coef), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y * 4);
+	drawText("X: " + floatToString(shift.x * NUMBERS_COEF), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y * 5);
+	drawText("Y: " + floatToString(shift.y * NUMBERS_COEF), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y * 6);
+
 	for (GLint i = 0; i < width / 2; i += GRID_CELL_SIZE * DIVISION_SIZE)
-		drawText(floatToString(1.0f * i / width / scale_coef), i + INFO_SHIFT.x, INFO_SHIFT.y - 2);
+		drawText(floatToString(i * NUMBERS_COEF / scale_coef), i + INFO_SHIFT.x, INFO_SHIFT.y - 2);
 
 	for (GLint i = 0; -width / 2 < i; i -= GRID_CELL_SIZE * DIVISION_SIZE)
-		drawText(floatToString(1.0f * i / width / scale_coef), i + INFO_SHIFT.x, INFO_SHIFT.y - 2);
+		drawText(floatToString(i * NUMBERS_COEF / scale_coef), i + INFO_SHIFT.x, INFO_SHIFT.y - 2);
 
 	for (GLint i = GRID_CELL_SIZE * DIVISION_SIZE; i < height / 2; i += GRID_CELL_SIZE * DIVISION_SIZE)
-		drawText(floatToString(1.0f * i / height / scale_coef), INFO_SHIFT.x, i + INFO_SHIFT.y);
+		drawText(floatToString(i * NUMBERS_COEF / scale_coef), INFO_SHIFT.x, i + INFO_SHIFT.y);
 
 	for (GLint i = -GRID_CELL_SIZE * DIVISION_SIZE; -height / 2 < i; i -= GRID_CELL_SIZE * DIVISION_SIZE)
-		drawText(floatToString(1.0f * i / height / scale_coef), INFO_SHIFT.x, i + INFO_SHIFT.y);
+		drawText(floatToString(i * NUMBERS_COEF / scale_coef), INFO_SHIFT.x, i + INFO_SHIFT.y);
 }
 
 void Editor::drawGrid() {
@@ -231,7 +239,7 @@ void Editor::drawSpline() {
 	glTranslated(shift.x, shift.y, 0);
 
 	glColor3f(SPLINE_COLOR.R, SPLINE_COLOR.G, SPLINE_COLOR.B);
-	glPointSize(1.0f);
+	glPointSize(SPLINE_POINTS_SIZE);
 
 	switch (spline_view) {
 		case ViewType::POINT: glBegin(GL_POINTS);	 break;
@@ -248,11 +256,11 @@ void Editor::drawSpline() {
 }
 
 void Editor::shiftX(GLint speed) {
-	shift.x += static_cast<GLint>(speed / scale_coef);
+	shift.x += speed;
 }
 
 void Editor::shiftY(GLint speed) {
-	shift.y += static_cast<GLint>(speed / scale_coef);
+	shift.y += speed;
 }
 
 void Editor::scale(GLfloat factor) {

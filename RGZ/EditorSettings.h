@@ -11,6 +11,7 @@ static constexpr Color		  POINTS_COLOR		   = ColorElem::RED;
 static constexpr GLfloat	  POINTS_SIZE		   = 3.0f;
 
 static constexpr Color		  SPLINE_COLOR		   = ColorElem::BLUE;
+static constexpr GLfloat	  SPLINE_POINTS_SIZE   = 1.0f;
 
 static constexpr Color		  GRID_COLOR		   = ColorElem::GREY;
 static constexpr Color		  GRID_COORDLINE_COLOR = ColorElem::BLACK;
@@ -19,7 +20,6 @@ static constexpr std::uint8_t GRID_CELL_SIZE	   = 10;
 static constexpr std::uint8_t ARROW_WIDTH		   = 5;
 static constexpr std::uint8_t ARROW_HEIGHT		   = 15;
 static constexpr std::uint8_t DIVISION_SIZE		   = 6;
-static constexpr std::uint8_t PRECISION			   = 2;
 
 // Transformation settings
 static constexpr std::uint8_t DEGREE_MIN		= 1;
