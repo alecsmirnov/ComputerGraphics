@@ -31,16 +31,19 @@ private:
 	static void drawInfo();
 	static void drawGrid();
 	static void drawPoints();
-	static void drawSpline(std::uint8_t degree, GLdouble step);
+	static void drawSpline();
 	
 	static void shiftX(GLint speed);
 	static void shiftY(GLint speed);
 	static void scale(GLfloat factor);
+
 	static void increaseDegree();
 	static void decreaseDegree();
 	static void increaseStep();
 	static void decreaseStep();
+
 	static void changeView(ViewType& view);
+
 	static void addPoint(GLint x, GLint y);
 	static void clearPoints();
 
@@ -52,6 +55,7 @@ private:
 
 	static inline GLint width;
 	static inline GLint height;
+
 	static inline ClosedBSpline::Point shift;
 	static inline GLfloat scale_coef;
 

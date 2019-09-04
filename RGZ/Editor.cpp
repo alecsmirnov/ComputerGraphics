@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <sstream>
 
+static constexpr ClosedBSpline::Point INFO_SHIFT = {4, -12};
+
 Editor::Editor(GLint width, GLint height) { 
 	this->width = width; 
 	this->height = height;
@@ -46,7 +48,7 @@ void Editor::displayEvent() {
 	drawGrid();
 	drawInfo();
 	drawPoints();
-	drawSpline(degree, step);
+	drawSpline();
 
 	glFinish();
 }
@@ -107,6 +109,7 @@ void Editor::mouseWheelEvent(GLint button, GLint dir, GLint x, GLint y) {
 
 void Editor::drawText(std::string text, GLint x, GLint y) {
 	glRasterPos2i(x, y);
+
 	for (auto symbol : text)
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, symbol);
 }
@@ -114,23 +117,20 @@ void Editor::drawText(std::string text, GLint x, GLint y) {
 void Editor::drawInfo() {
 	glColor3f(GRID_COORDLINE_COLOR.R, GRID_COORDLINE_COLOR.G, GRID_COORDLINE_COLOR.B);
 
-	static constexpr GLint GRAPH_SHIFT_X = 4;
-	static constexpr GLint GRAPH_SHIFT_Y = -12;
-
-	drawText("Degree: " + std::to_string(degree), -width / 2 + GRAPH_SHIFT_X, height / 2 + GRAPH_SHIFT_Y);
-	drawText("Step: " + removeTrailingZeroes(step), -width / 2 + GRAPH_SHIFT_X, height / 2 + GRAPH_SHIFT_Y * 2);
+	drawText("Degree: " + std::to_string(degree), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y);
+	drawText("Step: " + removeTrailingZeroes(step), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y * 2);
 
 	for (GLint i = 0; i < width / 2; i += GRID_CELL_SIZE * DIVISION_SIZE)
-		drawText(floatToString(1.0f * i / width / scale_coef), i + GRAPH_SHIFT_X, GRAPH_SHIFT_Y - 2);
+		drawText(floatToString(1.0f * i / width / scale_coef), i + INFO_SHIFT.x, INFO_SHIFT.y - 2);
 
 	for (GLint i = 0; -width / 2 < i; i -= GRID_CELL_SIZE * DIVISION_SIZE)
-		drawText(floatToString(1.0f * i / width / scale_coef), i + GRAPH_SHIFT_X, GRAPH_SHIFT_Y - 2);
+		drawText(floatToString(1.0f * i / width / scale_coef), i + INFO_SHIFT.x, INFO_SHIFT.y - 2);
 
 	for (GLint i = GRID_CELL_SIZE * DIVISION_SIZE; i < height / 2; i += GRID_CELL_SIZE * DIVISION_SIZE)
-		drawText(floatToString(1.0f * i / height / scale_coef), GRAPH_SHIFT_X, i + GRAPH_SHIFT_Y);
+		drawText(floatToString(1.0f * i / height / scale_coef), INFO_SHIFT.x, i + INFO_SHIFT.y);
 
 	for (GLint i = -GRID_CELL_SIZE * DIVISION_SIZE; -height / 2 < i; i -= GRID_CELL_SIZE * DIVISION_SIZE)
-		drawText(floatToString(1.0f * i / height / scale_coef), GRAPH_SHIFT_X, i + GRAPH_SHIFT_Y);
+		drawText(floatToString(1.0f * i / height / scale_coef), INFO_SHIFT.x, i + INFO_SHIFT.y);
 }
 
 void Editor::drawGrid() {
@@ -164,6 +164,9 @@ void Editor::drawGrid() {
 	glVertex2i(-width / 2, 0);
 	glVertex2i(width / 2, 0);
 
+	glVertex2i(0, -height / 2);
+	glVertex2i(0, height / 2);
+
 	for (GLint i = 0; i < width / 2; i += GRID_CELL_SIZE * DIVISION_SIZE) {
 		glVertex2i(i, -ARROW_WIDTH);
 		glVertex2i(i, ARROW_WIDTH);
@@ -174,14 +177,6 @@ void Editor::drawGrid() {
 		glVertex2i(i, ARROW_WIDTH);
 	}
 
-	glVertex2i(width / 2 - ARROW_HEIGHT, ARROW_WIDTH);
-	glVertex2i(width / 2, 0);
-	glVertex2i(width / 2, 0);
-	glVertex2i(width / 2 - ARROW_HEIGHT, -ARROW_WIDTH);
-
-	glVertex2i(0, -height / 2);
-	glVertex2i(0, height / 2);
-
 	for (GLint i = 0; i < height / 2; i += GRID_CELL_SIZE * DIVISION_SIZE) {
 		glVertex2i(-ARROW_WIDTH, i);
 		glVertex2i(ARROW_WIDTH, i);
@@ -191,6 +186,11 @@ void Editor::drawGrid() {
 		glVertex2i(-ARROW_WIDTH, i);
 		glVertex2i(ARROW_WIDTH, i);
 	}
+
+	glVertex2i(width / 2 - ARROW_HEIGHT, ARROW_WIDTH);
+	glVertex2i(width / 2, 0);
+	glVertex2i(width / 2, 0);
+	glVertex2i(width / 2 - ARROW_HEIGHT, -ARROW_WIDTH);
 
 	glVertex2i(ARROW_WIDTH, height / 2 - ARROW_HEIGHT);
 	glVertex2i(0, height / 2);
@@ -224,7 +224,7 @@ void Editor::drawPoints() {
 	glPopMatrix();
 }	
 
-void Editor::drawSpline(std::uint8_t degree, GLdouble step) {
+void Editor::drawSpline() {
 	glPushMatrix();
 
 	glScalef(scale_coef, scale_coef, 0.0f);
