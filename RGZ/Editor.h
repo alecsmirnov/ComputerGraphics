@@ -21,8 +21,15 @@ private:
 	static void mouseEvent(int button, int state, int x, int y);
 	static void mouseWheelEvent(int button, int dir, int x, int y);
 
+	static void drawGrid();
 	static void drawPoints();
 	static void drawSpline(std::vector<BSpline::Point>::size_type degree, double step);
+	
+	static void shiftX(GLint speed);
+	static void shiftY(GLint speed);
+	static void scale(GLfloat factor);
+	static void addPoint(int x, int y);
+	static void clearPoints();
 
 private:
 	static inline const char* window_title = "Closed B-spline";
@@ -30,7 +37,7 @@ private:
 	static inline GLint width;
 	static inline GLint height;
 	static inline BSpline::Point shift;
-	static inline GLfloat scale;
+	static inline GLfloat scale_coef;
 
 	static inline std::vector<BSpline::Point> points;
 };

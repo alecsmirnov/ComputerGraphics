@@ -18,6 +18,7 @@ namespace ColorElem {
 	static constexpr Color BLUE		 = {0.0f, 0.5f, 1.0f};
 	static constexpr Color DARK_BLUE = {0.0f, 0.0f, 1.0f};
 	static constexpr Color VIOLET	 = {0.5f, 0.5f, 0.5f};
+	static constexpr Color GREY		 = {0.9f, 0.9f, 0.9f};
 	static constexpr Color BLACK	 = {0.0f, 0.0f, 0.0f};
 }
 
