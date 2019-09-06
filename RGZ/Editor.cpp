@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <sstream>
 
+static constexpr GLfloat CENTER_POINT_SIZE = 2.5f;
+
 static constexpr ClosedBSpline::Point INFO_SHIFT = {4, -12};
 
 static constexpr std::uint8_t PRECISION	   = 2;
@@ -206,6 +208,7 @@ void Editor::drawGrid() {
 	glVertex2i(-ARROW_WIDTH, height / 2 - ARROW_HEIGHT);
 	glEnd();
 
+	glPointSize(CENTER_POINT_SIZE);
 	glBegin(GL_POINTS);
 	glVertex2i(0, 0);
 	glEnd();
