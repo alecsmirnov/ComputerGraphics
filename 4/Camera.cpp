@@ -8,6 +8,7 @@ static constexpr GLfloat DEGREE = 1.0f;
 static constexpr GLfloat DEGREE_BASE = 90.0f;
 
 static constexpr GLfloat MOUSE_SHIFT_FACTOR = 600.0f;
+static constexpr GLfloat MOUSE_Y_BARRIER	= 5.995f;
 
 Camera::Camera(const Vector3f& position, const Vector3f& front, const Vector3f& up, GLfloat speed) {
 	this->position = position;
@@ -111,17 +112,19 @@ void Camera::rotateView(GLfloat angle, const Vector3f& up_rotate) {
 	auto cos_a = std::cosf(angle);
 	auto sin_a = std::sinf(angle);
 
-	GLfloat new_x = (cos_a + (1 - cos_a) * up_rotate.getX() * up_rotate.getX()) * view.getX() +
-					((1 - cos_a) * up_rotate.getX() * up_rotate.getY() - up_rotate.getZ() * sin_a) * view.getY() +
-					((1 - cos_a) * up_rotate.getX() * up_rotate.getZ() + up_rotate.getY() * sin_a) * view.getZ();
-
 	GLfloat new_y = ((1 - cos_a) * up_rotate.getX() * up_rotate.getY() + up_rotate.getZ() * sin_a) * view.getX() +
 					(cos_a + (1 - cos_a) * up_rotate.getY() * up_rotate.getY()) * view.getY() +
 					((1 - cos_a) * up_rotate.getY() * up_rotate.getZ() - up_rotate.getX() * sin_a) * view.getZ();
 
-	GLfloat new_z = ((1 - cos_a) * up_rotate.getX() * up_rotate.getZ() - up_rotate.getY() * sin_a) * view.getX() +
-					((1 - cos_a) * up_rotate.getY() * up_rotate.getZ() + up_rotate.getX() * sin_a) * view.getY() +
-					(cos_a + (1 - cos_a) * up_rotate.getZ() * up_rotate.getZ()) * view.getZ();
+	if (std::fabsf(new_y) < MOUSE_Y_BARRIER) {
+		GLfloat new_x = (cos_a + (1 - cos_a) * up_rotate.getX() * up_rotate.getX()) * view.getX() +
+						((1 - cos_a) * up_rotate.getX() * up_rotate.getY() - up_rotate.getZ() * sin_a) * view.getY() +
+						((1 - cos_a) * up_rotate.getX() * up_rotate.getZ() + up_rotate.getY() * sin_a) * view.getZ();
 
-	front.setCoords(position + Vector3f(new_x, new_y, new_z));
+		GLfloat new_z = ((1 - cos_a) * up_rotate.getX() * up_rotate.getZ() - up_rotate.getY() * sin_a) * view.getX() +
+						((1 - cos_a) * up_rotate.getY() * up_rotate.getZ() + up_rotate.getX() * sin_a) * view.getY() +
+						(cos_a + (1 - cos_a) * up_rotate.getZ() * up_rotate.getZ()) * view.getZ();
+
+		front.setCoords(position + Vector3f(new_x, new_y, new_z));
+	}
 }
