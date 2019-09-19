@@ -228,22 +228,30 @@ void Editor::drawInfo() {
 
 	if (selection && figures.size()) {
 		drawText("Current figure: " + std::to_string(current_figure), INFO_SHIFT.x, height + INFO_SHIFT.y * 5);
-		drawText("Figure rotate:  " + boolToStr(figures_rotation[current_figure].active), INFO_SHIFT.x, height + INFO_SHIFT.y * 6);
+		drawText("Figure rotate:  " + boolToStr(figures_rotation[current_figure].active), 
+												INFO_SHIFT.x, height + INFO_SHIFT.y * 6);
 
 		GLint row_shift = 0;
 		if (figures_rotation[current_figure].active) {
-			drawText("Rotate X:       " + boolToStr(figures_rotation[current_figure].coords.getX()), INFO_SHIFT.x, height + INFO_SHIFT.y * 7);
-			drawText("Rotate y:       " + boolToStr(figures_rotation[current_figure].coords.getY()), INFO_SHIFT.x, height + INFO_SHIFT.y * 8);
-			drawText("Rotate Z:       " + boolToStr(figures_rotation[current_figure].coords.getZ()), INFO_SHIFT.x, height + INFO_SHIFT.y * 9);
+			drawText("Rotate X:       " + boolToStr(figures_rotation[current_figure].coords.getX()), 
+													INFO_SHIFT.x, height + INFO_SHIFT.y * 7);
+			drawText("Rotate y:       " + boolToStr(figures_rotation[current_figure].coords.getY()), 
+													INFO_SHIFT.x, height + INFO_SHIFT.y * 8);
+			drawText("Rotate Z:       " + boolToStr(figures_rotation[current_figure].coords.getZ()), 
+													INFO_SHIFT.x, height + INFO_SHIFT.y * 9);
 
 			row_shift = 3;
 		}
 
-		drawText("Position X:     " + std::to_string(figures[current_figure]->getPosition().getX()), INFO_SHIFT.x, height + INFO_SHIFT.y * (8 + row_shift));
-		drawText("Position Y:     " + std::to_string(figures[current_figure]->getPosition().getY()), INFO_SHIFT.x, height + INFO_SHIFT.y * (9 + row_shift));
-		drawText("Position Z:     " + std::to_string(figures[current_figure]->getPosition().getZ()), INFO_SHIFT.x, height + INFO_SHIFT.y * (10 + row_shift));
+		drawText("Position X:     " + std::to_string(figures[current_figure]->getPosition().getX()), 
+													 INFO_SHIFT.x, height + INFO_SHIFT.y * (8 + row_shift));
+		drawText("Position Y:     " + std::to_string(figures[current_figure]->getPosition().getY()), 
+													 INFO_SHIFT.x, height + INFO_SHIFT.y * (9 + row_shift));
+		drawText("Position Z:     " + std::to_string(figures[current_figure]->getPosition().getZ()), 
+													 INFO_SHIFT.x, height + INFO_SHIFT.y * (10 + row_shift));
 
-		drawText("Figure texture: " + textureInfo(figures[current_figure]->getTexture()), INFO_SHIFT.x, height + INFO_SHIFT.y * (12 + row_shift));
+		drawText("Figure texture: " + textureInfo(figures[current_figure]->getTexture()), 
+												  INFO_SHIFT.x, height + INFO_SHIFT.y * (12 + row_shift));
 	}
 
 	glPopMatrix();
