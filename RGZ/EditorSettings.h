@@ -7,8 +7,12 @@
 // Field settings
 static constexpr Color		  BACKGROUND_COLOR	   = ColorElem::WHITE;
 
+static constexpr Color		  WARNING_COLOR        = ColorElem::RED;
+
 static constexpr Color		  POINTS_COLOR		   = ColorElem::RED;
 static constexpr GLfloat	  POINTS_SIZE		   = 3.0f;
+
+static constexpr Color		  CURRENT_POINT_COLOR  = ColorElem::GREEN;
 
 static constexpr Color		  SPLINE_COLOR		   = ColorElem::BLUE;
 static constexpr GLfloat	  SPLINE_POINTS_SIZE   = 1.0f;

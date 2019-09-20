@@ -19,6 +19,9 @@ static constexpr std::uint8_t D_BUTTON = 'd';
 static constexpr std::uint8_t Z_BUTTON = 'z';
 static constexpr std::uint8_t X_BUTTON = 'x';
 
+static constexpr std::uint8_t C_BUTTON = 'c';
+static constexpr std::uint8_t V_BUTTON = 'v';
+
 static constexpr std::uint8_t MINUS_BUTTON = 45;
 static constexpr std::uint8_t EQUAL_BUTTON = 61;
 

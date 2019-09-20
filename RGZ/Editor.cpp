@@ -20,6 +20,8 @@ Editor::Editor(GLint width, GLint height) {
 	degree = DEGREE_MIN;
 	step = STEP_MIN;
 
+	current_point = 0;
+
 	points_view = ViewType::POINT;
 	spline_view = ViewType::LINE;
 }
@@ -52,8 +54,9 @@ void Editor::displayEvent() {
 
 	drawGrid();
 	drawInfo();
-	drawPoints();
 	drawSpline();
+	drawPoints();
+	drawCurrentPoint();
 
 	glDisable(GL_POINT_SMOOTH);
 	glFinish();
@@ -77,14 +80,19 @@ void Editor::keyboardEvent(std::uint8_t key, GLint x, GLint y) {
 		case A_BUTTON:	   shiftX(-SHIFT_SPEED);	break;
 		case D_BUTTON:	   shiftX(SHIFT_SPEED);	    break;
 
-		case Q_BUTTON:	   decreaseDegree();		break;
-		case E_BUTTON:	   increaseDegree();		break;
+		case Q_BUTTON:	   prevPoint();			    break;
+		case E_BUTTON:	   nextPoint();			    break;
 
-		case Z_BUTTON:	   decreaseStep();			break;
-		case X_BUTTON:	   increaseStep();			break;
+		case Z_BUTTON:	   decreaseDegree();		break;
+		case X_BUTTON:	   increaseDegree();		break;
+
+		case C_BUTTON:	   decreaseStep();			break;
+		case V_BUTTON:	   increaseStep();			break;
 
 		case TAB_BUTTON:   changeView(points_view); break;
 		case SPACE_BUTTON: changeView(spline_view); break;
+
+		case DEL_BUTTON:   clearPoints();           break;
 
 		case ESC_BUTTON:   glutLeaveMainLoop();	    break;
 		default:;
@@ -96,8 +104,8 @@ void Editor::keyboardEvent(std::uint8_t key, GLint x, GLint y) {
 void Editor::mouseEvent(GLint button, GLint state, GLint x, GLint y) {
 	if (state == GLUT_DOWN)
 		switch (button) {
-			case GLUT_LEFT_BUTTON:  addPoint(x, y); break;
-			case GLUT_RIGHT_BUTTON: clearPoints();  break;
+			case GLUT_LEFT_BUTTON:  addPoint(x, y);       break;
+			case GLUT_RIGHT_BUTTON: deleteCurrentPoint(); break;
 			default:;
 		}
 
@@ -129,6 +137,19 @@ void Editor::drawInfo() {
 	drawText("Scale: " + floatToString(scale_coef), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y * 4);
 	drawText("X: " + floatToString(shift.x * NUMBERS_COEF), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y * 5);
 	drawText("Y: " + floatToString(shift.y * NUMBERS_COEF), -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y * 6);
+
+	auto points_count_msg = "Points count: " + std::to_string(points.size());
+	auto spline_points_need = static_cast<std::vector<ClosedBSpline::Point>::size_type>(degree + 1);
+
+	if (points.size() < spline_points_need) {
+		glColor3f(WARNING_COLOR.R, WARNING_COLOR.G, WARNING_COLOR.B);
+
+		points_count_msg += "; need points: " + std::to_string(degree + 1);
+	}
+
+	drawText(points_count_msg, -width / 2 + INFO_SHIFT.x, height / 2 + INFO_SHIFT.y * 8);
+
+	glColor3f(GRID_COORDLINE_COLOR.R, GRID_COORDLINE_COLOR.G, GRID_COORDLINE_COLOR.B);
 
 	for (GLint i = 0; i < width / 2; i += GRID_CELL_SIZE * DIVISION_SIZE)
 		drawText(floatToString(i * NUMBERS_COEF / scale_coef), i + INFO_SHIFT.x, INFO_SHIFT.y - 2);
@@ -214,25 +235,54 @@ void Editor::drawGrid() {
 	glEnd();
 }
 
+void Editor::drawCurrentPoint() {
+	if (points_view != ViewType::NONE && !points.empty()) {
+		glPushMatrix();
+
+		glScalef(scale_coef, scale_coef, 0.0f);
+		glTranslated(shift.x, shift.y, 0);
+
+		glColor3f(GRID_COORDLINE_COLOR.R, GRID_COORDLINE_COLOR.G, GRID_COORDLINE_COLOR.B);
+
+		glPointSize(CENTER_POINT_SIZE * CENTER_POINT_SIZE);
+		glBegin(GL_POINTS);
+		glVertex2i(points[current_point].x, points[current_point].y);
+		glEnd();
+
+		glColor3f(CURRENT_POINT_COLOR.R, CURRENT_POINT_COLOR.G, CURRENT_POINT_COLOR.B);
+
+		glPointSize(CENTER_POINT_SIZE);
+		glBegin(GL_POINTS);
+		glVertex2i(points[current_point].x, points[current_point].y);
+		glEnd();
+
+		glPopMatrix();
+	}
+}
+
 void Editor::drawPoints() {
-	glPushMatrix();
+	auto draw = [](GLenum mode) {
+		glPushMatrix();
 
-	glScalef(scale_coef, scale_coef, 0.0f);
-	glTranslated(shift.x, shift.y, 0);
+		glScalef(scale_coef, scale_coef, 0.0f);
+		glTranslated(shift.x, shift.y, 0);
 
-	glColor3f(POINTS_COLOR.R, POINTS_COLOR.G, POINTS_COLOR.B);
-	glPointSize(POINTS_SIZE);
+		glColor3f(POINTS_COLOR.R, POINTS_COLOR.G, POINTS_COLOR.B);
+		glPointSize(POINTS_SIZE);
+
+		glBegin(mode);
+		for (auto point : points)
+			glVertex2i(point.x, point.y);
+		glEnd();
+
+		glPopMatrix();
+	};
 
 	switch (points_view) {
-		case ViewType::POINT: glBegin(GL_POINTS);	 break;
-		case ViewType::LINE:  glBegin(GL_LINE_LOOP); break;
+		case ViewType::LINE:  draw(GL_LINE_LOOP);
+		case ViewType::POINT: draw(GL_POINTS);    break;
+		case ViewType::NONE:                      break;
 	}
-
-	for (auto point : points)
-		glVertex2i(point.x, point.y);
-	glEnd();
-
-	glPopMatrix();
 }	
 
 void Editor::drawSpline() {
@@ -244,16 +294,20 @@ void Editor::drawSpline() {
 	glColor3f(SPLINE_COLOR.R, SPLINE_COLOR.G, SPLINE_COLOR.B);
 	glPointSize(SPLINE_POINTS_SIZE);
 
+	auto draw = [](GLenum mode) {
+		glBegin(mode);
+		auto spline_points = ClosedBSpline::calculate(points, degree, step);
+
+		for (auto spline_point : spline_points)
+			glVertex2i(spline_point.x, spline_point.y);
+		glEnd();
+	};
+
 	switch (spline_view) {
-		case ViewType::POINT: glBegin(GL_POINTS);	 break;
-		case ViewType::LINE:  glBegin(GL_LINE_LOOP); break;
+		case ViewType::NONE:  changeView(spline_view);
+		case ViewType::POINT: draw(GL_POINTS);	       break;
+		case ViewType::LINE:  draw(GL_LINE_LOOP);      break;
 	}
-
-	auto spline_points = ClosedBSpline::calculate(points, degree, step);
-
-	for (auto spline_point : spline_points)
-		glVertex2i(spline_point.x, spline_point.y);
-	glEnd();
 
 	glPopMatrix();
 }
@@ -292,10 +346,7 @@ void Editor::decreaseStep() {
 }
 
 void Editor::changeView(ViewType& view) {
-	if (view == ViewType::LINE)
-		view = ViewType::POINT;
-	else
-		view = ViewType::LINE;
+	view = static_cast<ViewType>((static_cast<GLint>(view) + 1) % static_cast<GLint>(ViewType::size));
 }
 
 void Editor::addPoint(GLint x, GLint y) {
@@ -303,8 +354,27 @@ void Editor::addPoint(GLint x, GLint y) {
 					  static_cast<GLint>((height / 2 - y) / scale_coef - shift.y)});
 }
 
+void Editor::deleteCurrentPoint() {
+	if (1 < points.size()) {
+		points.erase(points.begin() + current_point);
+		current_point = (current_point + 1) % points.size();
+	}
+	else
+		clearPoints();
+}
+
 void Editor::clearPoints() {
 	std::vector<ClosedBSpline::Point>().swap(points);
+}
+
+void Editor::prevPoint() {
+	if (1 < points.size())
+		current_point = current_point == 0 ? points.size() - 1 : current_point - 1;
+}
+
+void Editor::nextPoint() {
+	if (1 < points.size())
+		current_point = (current_point + 1) % points.size();
 }
 
 std::string Editor::floatToString(GLfloat value) {

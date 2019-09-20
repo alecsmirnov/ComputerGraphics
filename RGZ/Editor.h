@@ -16,8 +16,11 @@ public:
 
 private:
 	enum class ViewType {
+		POINT,
 		LINE,
-		POINT
+		NONE,
+
+		size
 	};
 
 private:
@@ -30,6 +33,7 @@ private:
 	static void drawText(std::string text, GLint x, GLint y);
 	static void drawInfo();
 	static void drawGrid();
+	static void drawCurrentPoint();
 	static void drawPoints();
 	static void drawSpline();
 	
@@ -45,7 +49,11 @@ private:
 	static void changeView(ViewType& view);
 
 	static void addPoint(GLint x, GLint y);
+	static void deleteCurrentPoint();
 	static void clearPoints();
+
+	static void prevPoint();
+	static void nextPoint();
 
 	static std::string floatToString(GLfloat value);
 	static std::string removeTrailingZeroes(GLdouble value);
@@ -63,6 +71,8 @@ private:
 	static inline GLdouble step;
 
 	static inline std::vector<ClosedBSpline::Point> points;
+
+	static inline std::vector<ClosedBSpline::Point>::size_type current_point;
 
 	static inline ViewType points_view;
 	static inline ViewType spline_view;
