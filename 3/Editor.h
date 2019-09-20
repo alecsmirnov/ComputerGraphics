@@ -8,11 +8,6 @@
 #include "LightSource.h"
 #include "BMPTextureLoaderLight.h"
 
-struct Rotation {
-	bool active;
-	Vector3f coords;
-};
-
 class Editor {
 public:
 	Editor(GLint width = 640, GLint height = 480);
@@ -59,6 +54,15 @@ private:
 	static void reshapeEvent(GLint new_width, GLint new_height);
 	static void keyboardEvent(std::uint8_t key, GLint x, GLint y);
 	static void mouseMoveEvent(GLint x, GLint y);
+
+	static std::string boolToStr(bool val);
+	static std::string textureInfo(std::vector<GLuint>::size_type num);
+
+public:
+	struct Rotation {
+		bool active;
+		Vector3f coords;
+	};
 
 private:
 	static inline const char* window_title = "Scene";

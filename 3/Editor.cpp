@@ -14,18 +14,18 @@ static const Vector3f    CAMERA_START_POS   = {-18.0f, 0.5f, -3.0f};
 static const Vector3f    CAMERA_START_FRONT = {-12.0f, 0.5f, -3.0f};
 static constexpr GLfloat CAMERA_SPEED       = 0.08f;
 
-static constexpr Color   GRID_COLOR         = ColorElem::BLUE;
-static constexpr GLint   GRID_SIZE          = 50;
-static constexpr GLint   GRID_CELL_SIZE     = 1;
+static constexpr Color GRID_COLOR     = ColorElem::BLUE;
+static constexpr GLint GRID_SIZE      = 50;
+static constexpr GLint GRID_CELL_SIZE = 1;
 
-static constexpr GLfloat LIGHT_DISTANCE     = 400.0f;
-static constexpr GLfloat LIGHT_COEF[]       = {0.0f, 0.0f, 255.0f / (LIGHT_DISTANCE * LIGHT_DISTANCE)};
+static constexpr GLfloat LIGHT_DISTANCE = 400.0f;
+static constexpr GLfloat LIGHT_COEF[]   = {0.0f, 0.0f, 255.0f / (LIGHT_DISTANCE * LIGHT_DISTANCE)};
 
-static const Vector3f    ROTATE_CENTER      = {0.0f, 0.0f, 0.0f};
-static const Rotation    ROTATION_INIT      = {false, {0.0f, 0.0f, 0.0f}};
+static const Vector3f         ROTATE_CENTER = {0.0f, 0.0f, 0.0f};
+static const Editor::Rotation ROTATION_INIT = {false, {0.0f, 0.0f, 0.0f}};
 
-static constexpr Color   INFO_COLOR         = ColorElem::WHITE;
-static constexpr Point   INFO_SHIFT			= {4, -14};
+static constexpr Color INFO_COLOR = ColorElem::WHITE;
+static constexpr Point INFO_SHIFT = {4, -14};
 
 Editor::Editor(GLint width, GLint height) {
 	this->width = width;
@@ -213,14 +213,6 @@ void Editor::drawInfo() {
 
 	glPushMatrix();
 	glLoadIdentity();
-
-	auto boolToStr = [](bool val) -> std::string {
-		return val ? "true" : "false";
-	};
-
-	auto textureInfo = [](std::size_t num) -> std::string {
-		return num == 0 ? "none" : std::to_string(figures[current_figure]->getTexture());
-	};
 	
 	drawText("Figures count:  " + std::to_string(figures.size()), INFO_SHIFT.x, height + INFO_SHIFT.y);
 	drawText("Lighting:       " + boolToStr(light), INFO_SHIFT.x, height + INFO_SHIFT.y * 2);
@@ -239,7 +231,6 @@ void Editor::drawInfo() {
 													INFO_SHIFT.x, height + INFO_SHIFT.y * 8);
 			drawText("Rotate Z:       " + boolToStr(figures_rotation[current_figure].coords.getZ()), 
 													INFO_SHIFT.x, height + INFO_SHIFT.y * 9);
-
 			row_shift = 3;
 		}
 
@@ -313,14 +304,16 @@ void Editor::drawLight(std::vector<LightSource*>::size_type num) {
 						  light_sources[num]->getPosition().getY(),
 						  light_sources[num]->getPosition().getZ(), 1.0f};
 
-	glEnable(GL_LIGHT0 + num);
+	auto light_num = static_cast<GLenum>(GL_LIGHT0 + num);
 
-	glLightfv(GL_LIGHT0 + num, GL_DIFFUSE, color);
-	glLightfv(GL_LIGHT0 + num, GL_POSITION, position);
+	glEnable(light_num);
 
-	glLightf(GL_LIGHT0 + num, GL_CONSTANT_ATTENUATION, LIGHT_COEF[0]);
-	glLightf(GL_LIGHT0 + num, GL_LINEAR_ATTENUATION, LIGHT_COEF[1]);
-	glLightf(GL_LIGHT0 + num, GL_QUADRATIC_ATTENUATION, LIGHT_COEF[2]);
+	glLightfv(light_num, GL_DIFFUSE, color);
+	glLightfv(light_num, GL_POSITION, position);
+
+	glLightf(light_num, GL_CONSTANT_ATTENUATION, LIGHT_COEF[0]);
+	glLightf(light_num, GL_LINEAR_ATTENUATION, LIGHT_COEF[1]);
+	glLightf(light_num, GL_QUADRATIC_ATTENUATION, LIGHT_COEF[2]);
 }
 
 void Editor::displayEvent() {
@@ -335,9 +328,9 @@ void Editor::displayEvent() {
 	auto camera_front = camera.getFront();
 	auto camera_up = camera.getUp();
 
-	gluLookAt(camera_pos.getX(), camera_pos.getY(), camera_pos.getZ(),
+	gluLookAt(camera_pos.getX(),   camera_pos.getY(),   camera_pos.getZ(),
 			  camera_front.getX(), camera_front.getY(), camera_front.getZ(),
-			  camera_up.getX(), camera_up.getY(), camera_up.getZ());
+			  camera_up.getX(),    camera_up.getY(),    camera_up.getZ());
 
 	drawScene();
 
@@ -394,4 +387,12 @@ void Editor::mouseMoveEvent(GLint x, GLint y) {
 	camera.mouseView(width, height);
 
 	glutPostRedisplay();
+}
+
+std::string Editor::boolToStr(bool val) {
+	return val ? "true" : "false";
+}
+
+std::string Editor::textureInfo(std::vector<GLuint>::size_type num) {
+	return num == 0 ? "none" : std::to_string(figures[current_figure]->getTexture());
 }
