@@ -26,7 +26,7 @@ static constexpr std::uint8_t ARROW_HEIGHT		   = 15;
 static constexpr std::uint8_t DIVISION_SIZE		   = 6;
 
 // Transformation settings
-static constexpr std::uint8_t DEGREE_MIN		= 1;
+static constexpr std::uint8_t DEGREE_MIN		= 2;
 static constexpr std::uint8_t DEGREE_MAX		= 8;
 static constexpr std::uint8_t DEGREE_COEF		= 1;
 
