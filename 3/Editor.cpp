@@ -1,197 +1,208 @@
 ﻿#include "Editor.h"
 
-#include <fstream>
+#include <iomanip>
+#include <sstream>
 #include <cctype>
 
-#include "KeyButtons.h"
+static constexpr Color BACKGROUD_COLOR = ColorElem::BLACK;
+static constexpr Color INFO_COLOR      = ColorElem::WHITE;
 
-struct Point {
-	GLint x;
-	GLint y;
-};
+static constexpr GLfloat CAMERA_MOVE_SPEED   = 5.0f;
+static constexpr GLfloat CAMERA_SCALE_FACTOR = 0.4f;
 
-static const Vector3f    CAMERA_START_POS   = {-18.0f, 0.5f, -3.0f};
-static const Vector3f    CAMERA_START_FRONT = {-12.0f, 0.5f, -3.0f};
-static constexpr GLfloat CAMERA_SPEED       = 0.08f;
+static constexpr GLfloat CAMERA_SCALE_FACTOR_MIN = -CAMERA_SCALE_FACTOR - 1.0f ;
+static constexpr GLfloat CAMERA_SCALE_FACTOR_MAX =  CAMERA_SCALE_FACTOR + 9.0f;
 
-static constexpr Color GRID_COLOR     = ColorElem::BLUE;
-static constexpr GLint GRID_SIZE      = 50;
-static constexpr GLint GRID_CELL_SIZE = 1;
+static constexpr GLfloat RADIUS_COEF = 0.02f;
 
-static constexpr GLfloat LIGHT_DISTANCE = 400.0f;
-static constexpr GLfloat LIGHT_COEF[]   = {0.0f, 0.0f, 255.0f / (LIGHT_DISTANCE * LIGHT_DISTANCE)};
+static constexpr GLfloat RADIUS_MIN  = 0.02f;
+static constexpr GLfloat RADIUS_MAX  = 9.f;
 
-static const Vector3f         ROTATE_CENTER = {0.0f, 0.0f, 0.0f};
-static const Editor::Rotation ROTATION_INIT = {false, {0.0f, 0.0f, 0.0f}};
+static constexpr GLint SECTORS_STACKS_COEF = 1;
 
-static constexpr Color INFO_COLOR = ColorElem::WHITE;
-static constexpr Point INFO_SHIFT = {4, -14};
+static constexpr GLint SECTORS_STACKS_MIN  = -SECTORS_STACKS_COEF + 3 ;
+static constexpr GLint SECTORS_STACKS_MAX  =  SECTORS_STACKS_COEF + 50;
 
-Editor::Editor(GLint width, GLint height) {
-	this->width = width;
-	this->height = height;
+static constexpr vec2<GLint> INFO_SHIFT = {4, -14};
 
-	camera.setPosition(CAMERA_START_POS);
-	camera.setFront(CAMERA_START_FRONT);
-	camera.setSpeed(CAMERA_SPEED);
+Editor::Editor(GLint width, GLint height) { 
+	this->width = width; 
+	this->height = height; 
 
-	current_figure = 0;
+	sphere.init(1.0f, 36, 36);
 
-	selection = false;
-	light = false;
+	camera_x = 0.0f;
+	camera_y = 0.0f;
+	camera_scale = 1.0f;
+
+	view_type = ViewType::FILL;
+
+	color_num = 0;
+
+	current_texture = 0;
+}
+
+void Editor::start(int* argc, char* argv[]) {
+	glutInit(argc, argv);
+
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH);
+
+	glutInitWindowSize(width, height);
+	glutCreateWindow(window_title);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_CULL_FACE);
+
+	texture_loader.init();
+
+	glutDisplayFunc(displayEvent);
+	glutReshapeFunc(reshapeEvent);
+	glutKeyboardFunc(keyboardEvent);	
+	glutMouseWheelFunc(mouseWheelEvent);
+
+	glutMainLoop();	
 }
 
 void Editor::addTexture(const char* image) {
 	texture_loader.addTexture(image);
 }
 
-void Editor::readInputFiles(std::string objects_filename, std::string light_sources_filename) {
-	readObjectsFile(objects_filename);
-	readLightSourcesFile(light_sources_filename);
+void Editor::displayEvent() {
+	glClearColor(BACKGROUD_COLOR.R, BACKGROUD_COLOR.G, BACKGROUD_COLOR.B, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glPushMatrix();
+
+	glTranslatef(0, 0, -(camera_scale + 3));
+	glRotatef(camera_x, 1, 0, 0);
+	glRotatef(camera_y, 0, 1, 0);
+
+	drawInfo();
+
+	auto color = getColorByNum(color_num);
+	glColor3f(color.R, color.G, color.B);
+	sphere.draw(current_texture);
+
+	glPopMatrix();
+
+	glutSwapBuffers();
+	glFinish();
 }
 
-void Editor::start(int* argc, char* argv[]) {
-	glutInit(argc, argv);
+void Editor::reshapeEvent(GLint new_width, GLint new_height) {
+	width = new_width;
+	height = new_height;
 
-	glutInitDisplayMode(GLUT_RGB);
+	glViewport(0, 0, width, height);
 
-	glutInitWindowSize(width, height);
-	glutCreateWindow(window_title);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 
-	texture_loader.init();
+	gluPerspective(40.0f, 1.0f * width / height, 1.0f, 1000.0f);
 
-	glutDisplayFunc(displayEvent);
-	glutReshapeFunc(reshapeEvent);
-	glutKeyboardFunc(keyboardEvent);
-	glutPassiveMotionFunc(mouseMoveEvent);
-
-	glutMainLoop();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 }
 
-Editor::~Editor() {
-	for (std::vector<Figure*>::size_type i = 0; i != figures.size(); ++i)
-		delete[] figures[i];
+void Editor::keyboardEvent(std::uint8_t key, GLint x, GLint y) {
+	switch (std::tolower(key)) {
+		case SPACE_BUTTON: changeViewType();                    break;
+		
+		case W_BUTTON:     moveCameraX(CAMERA_MOVE_SPEED);      break;
+		case S_BUTTON:     moveCameraX(-CAMERA_MOVE_SPEED);     break;
+		case A_BUTTON:     moveCameraY(-CAMERA_MOVE_SPEED);     break;
+		case D_BUTTON:     moveCameraY(CAMERA_MOVE_SPEED);      break;
 
-	std::vector<Figure*>().swap(figures);
-	std::vector<Sphere*>().swap(spheres);
-	std::vector<LightSource*>().swap(light_sources);
-}
+		case Q_BUTTON:     changeRadius(-RADIUS_COEF);          break;
+		case E_BUTTON:     changeRadius(RADIUS_COEF);           break;
 
-void Editor::readObjectsFile(std::string filename) {
-	std::ifstream object_file(filename);
+		case Z_BUTTON:     changeSectors(-SECTORS_STACKS_COEF); break;
+		case X_BUTTON:     changeSectors(SECTORS_STACKS_COEF);  break;
 
-	GLfloat center_x, center_y, center_z;
-	Color color;
-	GLfloat radius;
+		case C_BUTTON:     changeStacks(-SECTORS_STACKS_COEF);  break;
+		case V_BUTTON:     changeStacks(SECTORS_STACKS_COEF);   break;
 
-	while (object_file >> radius >> center_x >> center_y >> center_z >> color.R >> color.G >> color.B) {
-		auto new_sphere = new Sphere(radius, Vector3f(center_x, center_y, center_z), color);
+		case TAB_BUTTON:   changeTexture();                     break;
+		case ENTER_BUTTON: changeColor();                       break;
 
-		spheres.push_back(new_sphere);
-		figures.push_back(new_sphere);
-		figures_rotation.push_back(ROTATION_INIT);
-	}
-	
-	object_file.close();
-}
-
-void Editor::readLightSourcesFile(std::string filename) {
-	std::ifstream light_file(filename);
-
-	GLfloat position_x, position_y, position_z;
-	Color color;
-
-	while (light_file >> position_x >> position_y >> position_z >> color.R >> color.G >> color.B) {
-		auto new_light_source = new LightSource(Vector3f(position_x, position_y, position_z), color);
-
-		light_sources.push_back(new_light_source);
-		figures.push_back(new_light_source);
-		figures_rotation.push_back(ROTATION_INIT);
+		case ESC_BUTTON:   glutLeaveMainLoop();                 break;
+		default:;
 	}
 
-	light_file.close();
+	glutPostRedisplay();
 }
 
-void Editor::nextFigure() {
-	if (selection && 1 < figures.size())
-		current_figure = (current_figure + 1) % figures.size();
+void Editor::mouseWheelEvent(GLint button, GLint dir, GLint x, GLint y) {
+	if (0 < dir)
+		cameraScale(CAMERA_SCALE_FACTOR);
+	else
+		cameraScale(-CAMERA_SCALE_FACTOR);
+
+	glutPostRedisplay();
 }
 
-void Editor::prevFigure() {
-	if (selection && 1 < figures.size())
-		current_figure = current_figure == 0 ? figures.size() - 1 : current_figure - 1;
+void Editor::moveCameraX(GLfloat speed) {
+	camera_x -= speed;
 }
 
-void Editor::figureMoveForward() {
-	if (selection && !figures.empty())
-		figures[current_figure]->moveForward();
+void Editor::moveCameraY(GLfloat speed) {
+	camera_y += speed;
 }
 
-void Editor::figureMoveBack() {
-	if (selection && !figures.empty())
-		figures[current_figure]->moveBack();
+void Editor::cameraScale(GLfloat factor) {
+	if (CAMERA_SCALE_FACTOR_MIN < camera_scale + factor && camera_scale + factor < CAMERA_SCALE_FACTOR_MAX)
+		camera_scale += factor;
 }
 
-void Editor::figureMoveLeft() {
-	if (selection && !figures.empty())
-		figures[current_figure]->moveLeft();
-}
+void Editor::changeViewType() {
+	if (view_type == ViewType::FILL)
+		view_type = ViewType::LINE;
+	else
+		view_type = ViewType::FILL;
 
-void Editor::figureMoveRight() {
-	if (selection && !figures.empty())
-		figures[current_figure]->moveRight();
-}
-
-void Editor::figureMoveUp() {
-	if (selection && !figures.empty())
-		figures[current_figure]->moveUp();
-}
-
-void Editor::figureMoveDown() {
-	if (selection && !figures.empty())
-		figures[current_figure]->moveDown();
-}
-
-void Editor::rotationSwitch() {
-	if (selection && !figures.empty())
-		figures_rotation[current_figure].active = !figures_rotation[current_figure].active;
-}
-
-void Editor::figureRotateX() {
-	if (selection && !figures.empty() && figures_rotation[current_figure].active)
-		if (figures_rotation[current_figure].coords.getX() == 1.0f)
-			figures_rotation[current_figure].coords.setX(0.0f);
-		else
-			figures_rotation[current_figure].coords.setX(1.0f);
-}
-
-void Editor::figureRotateY() {
-	if (selection && !figures.empty() && figures_rotation[current_figure].active)
-		if (figures_rotation[current_figure].coords.getY() == 1.0f)
-			figures_rotation[current_figure].coords.setY(0.0f);
-		else
-			figures_rotation[current_figure].coords.setY(1.0f);
-}
-
-void Editor::figureRotateZ() {
-	if (selection && !figures.empty() && figures_rotation[current_figure].active)
-		if (figures_rotation[current_figure].coords.getZ() == 1.0f)
-			figures_rotation[current_figure].coords.setZ(0.0f);
-		else
-			figures_rotation[current_figure].coords.setZ(1.0f);
-}
-
-void Editor::changeSphereTexture() {
-	if (selection && !figures.empty()) {
-		auto textures = texture_loader.getTextures();
-		GLuint texture = (figures[current_figure]->getTexture() + 1) % textures.size();
-
-		figures[current_figure]->setTexture(texture);
+	switch (view_type) {
+		case ViewType::FILL:
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			glEnable(GL_CULL_FACE);
+			break;
+		case ViewType::LINE:
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glDisable(GL_CULL_FACE);
+			break;
 	}
 }
 
-void Editor::selectionSwitch() {
-	selection = !selection;
+void Editor::changeRadius(GLfloat radius_coef) {
+	auto radius = sphere.getRadius();
+
+	if (RADIUS_MIN < radius + radius_coef && radius + radius_coef < RADIUS_MAX)
+		sphere.init(radius + radius_coef, sphere.getSectorCount(), sphere.getStackCount());
+}
+
+void Editor::changeSectors(GLint sector_coef) {
+	auto sectors = sphere.getSectorCount();
+
+	if (SECTORS_STACKS_MIN < sectors + sector_coef && sectors + sector_coef < SECTORS_STACKS_MAX)
+		sphere.init(sphere.getRadius(), sectors + sector_coef, sphere.getStackCount());
+}
+
+void Editor::changeStacks(GLint stacks_coef) {
+	auto stacks = sphere.getStackCount();
+
+	if (SECTORS_STACKS_MIN < stacks + stacks_coef && stacks + stacks_coef < SECTORS_STACKS_MAX)
+		sphere.init(sphere.getRadius(), sphere.getSectorCount(), stacks + stacks_coef);
+}
+
+void Editor::changeTexture() {
+	auto textures = texture_loader.getTextures();
+
+	if (1 < textures.size())
+		current_texture = (current_texture + 1) % (textures.size() + 1);
+}
+
+void Editor::changeColor() {
+	color_num = (color_num + 1) % ColorElem::size;
 }
 
 void Editor::drawText(std::string text, GLint x, GLint y) {
@@ -213,37 +224,20 @@ void Editor::drawInfo() {
 
 	glPushMatrix();
 	glLoadIdentity();
-	
-	drawText("Figures count:  " + std::to_string(figures.size()), INFO_SHIFT.x, height + INFO_SHIFT.y);
-	drawText("Lighting:       " + boolToStr(light), INFO_SHIFT.x, height + INFO_SHIFT.y * 2);
-	drawText("Selection:      " + boolToStr(selection), INFO_SHIFT.x, height + INFO_SHIFT.y * 3);
 
-	if (selection && figures.size()) {
-		drawText("Current figure: " + std::to_string(current_figure), INFO_SHIFT.x, height + INFO_SHIFT.y * 5);
-		drawText("Figure rotate:  " + boolToStr(figures_rotation[current_figure].active), 
-												INFO_SHIFT.x, height + INFO_SHIFT.y * 6);
+	std::string view_type_str = "fill";
+	if (view_type == ViewType::LINE)
+		view_type_str = "lines";
 
-		GLint row_shift = 0;
-		if (figures_rotation[current_figure].active) {
-			drawText("Rotate X:       " + boolToStr(figures_rotation[current_figure].coords.getX()), 
-													INFO_SHIFT.x, height + INFO_SHIFT.y * 7);
-			drawText("Rotate y:       " + boolToStr(figures_rotation[current_figure].coords.getY()), 
-													INFO_SHIFT.x, height + INFO_SHIFT.y * 8);
-			drawText("Rotate Z:       " + boolToStr(figures_rotation[current_figure].coords.getZ()), 
-													INFO_SHIFT.x, height + INFO_SHIFT.y * 9);
-			row_shift = 3;
-		}
+	drawText("View:    " + view_type_str, INFO_SHIFT[0], height + INFO_SHIFT[1]);
+	drawText("Texture: " + textureInfo(current_texture), INFO_SHIFT[0], height + INFO_SHIFT[1] * 2);
+	drawText("Color:   " + colorNameByNum(color_num), INFO_SHIFT[0], height + INFO_SHIFT[1] * 3);
 
-		drawText("Position X:     " + std::to_string(figures[current_figure]->getPosition().getX()), 
-													 INFO_SHIFT.x, height + INFO_SHIFT.y * (8 + row_shift));
-		drawText("Position Y:     " + std::to_string(figures[current_figure]->getPosition().getY()), 
-													 INFO_SHIFT.x, height + INFO_SHIFT.y * (9 + row_shift));
-		drawText("Position Z:     " + std::to_string(figures[current_figure]->getPosition().getZ()), 
-													 INFO_SHIFT.x, height + INFO_SHIFT.y * (10 + row_shift));
+	drawText("Scale:   " + valToStr(-(camera_scale - 2), 1), INFO_SHIFT[0], height + INFO_SHIFT[1] * 5);
 
-		drawText("Figure texture: " + textureInfo(figures[current_figure]->getTexture()), 
-												  INFO_SHIFT.x, height + INFO_SHIFT.y * (12 + row_shift));
-	}
+	drawText("Radius:  " + valToStr(sphere.getRadius(), 2), INFO_SHIFT[0], height + INFO_SHIFT[1] * 7);
+	drawText("Sectors: " + std::to_string(sphere.getSectorCount()), INFO_SHIFT[0], height + INFO_SHIFT[1] * 8);
+	drawText("Stacks:  " + std::to_string(sphere.getStackCount()), INFO_SHIFT[0], height + INFO_SHIFT[1] * 9);
 
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
@@ -252,147 +246,32 @@ void Editor::drawInfo() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void Editor::drawGrid() {
-	glColor3f(GRID_COLOR.R, GRID_COLOR.G, GRID_COLOR.B);
+std::string Editor::valToStr(GLfloat val, std::uint8_t precision) {
+	std::stringstream stream;
 
-	for (GLint i = -GRID_SIZE; i <= GRID_SIZE; i += GRID_CELL_SIZE) {
-		glBegin(GL_LINES);
+	stream << std::fixed << std::setprecision(precision) << val;
 
-		glVertex3i(-GRID_SIZE, 0, i);
-		glVertex3i(GRID_SIZE, 0, i);
-
-		glVertex3i(i, 0, -GRID_SIZE);
-		glVertex3i(i, 0, GRID_SIZE);
-
-		glEnd();
-	}
-}
-
-void Editor::drawScene() {
-	drawGrid();
-
-	for (auto sphere : spheres)
-		sphere->draw();
-
-	glDisable(GL_LIGHTING);
-
-	drawInfo();
-
-	if (selection)
-		if (!figures.empty())
-			figures[current_figure]->drawFrame();
-
-	for (std::vector<LightSource*>::size_type i = 0; i != light_sources.size(); ++i) {
-		light_sources[i]->draw();
-		drawLight(i);
-	}
-
-	for (std::vector<Figure*>::size_type i = 0; i != figures.size(); ++i)
-		if (figures_rotation[i].active)
-			figures[i]->rotate(ROTATE_CENTER, figures_rotation[i].coords);
-	
-	glutPostRedisplay();
-}
-
-void Editor::drawLight(std::vector<LightSource*>::size_type num) {
-	glEnable(GL_COLOR_MATERIAL);
-
-	GLfloat color[] = {light_sources[num]->getColor().R,
-					   light_sources[num]->getColor().G,
-					   light_sources[num]->getColor().B};
-	GLfloat position[] = {light_sources[num]->getPosition().getX(),
-						  light_sources[num]->getPosition().getY(),
-						  light_sources[num]->getPosition().getZ(), 1.0f};
-
-	auto light_num = static_cast<GLenum>(GL_LIGHT0 + num);
-
-	glEnable(light_num);
-
-	glLightfv(light_num, GL_DIFFUSE, color);
-	glLightfv(light_num, GL_POSITION, position);
-
-	glLightf(light_num, GL_CONSTANT_ATTENUATION, LIGHT_COEF[0]);
-	glLightf(light_num, GL_LINEAR_ATTENUATION, LIGHT_COEF[1]);
-	glLightf(light_num, GL_QUADRATIC_ATTENUATION, LIGHT_COEF[2]);
-}
-
-void Editor::displayEvent() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
-	glutSetCursor(GLUT_CURSOR_NONE);
-	light ? glEnable(GL_LIGHTING) :
-			glDisable(GL_LIGHTING);
-	glLoadIdentity();
-
-	auto camera_pos = camera.getPosition();
-	auto camera_front = camera.getFront();
-	auto camera_up = camera.getUp();
-
-	gluLookAt(camera_pos.getX(),   camera_pos.getY(),   camera_pos.getZ(),
-			  camera_front.getX(), camera_front.getY(), camera_front.getZ(),
-			  camera_up.getX(),    camera_up.getY(),    camera_up.getZ());
-
-	drawScene();
-
-	glutSwapBuffers();
-	glFinish();
-}
-
-void Editor::reshapeEvent(GLint new_width, GLint new_height) {
-	glViewport(0, 0, width, height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(60.0, width / height, 0.1, GRID_SIZE * 2.0f);
-	glMatrixMode(GL_MODELVIEW);
-
-	glutPostRedisplay();
-}
-
-void Editor::keyboardEvent(std::uint8_t key, GLint x, GLint y) {
-	switch (std::tolower(key)) {
-		case W_BUTTON:	   camera.moveForward();  break;
-		case S_BUTTON:	   camera.moveBack();	  break;
-		case A_BUTTON:	   camera.moveLeft();	  break;
-		case D_BUTTON:	   camera.moveRight();	  break;
-
-		case Q_BUTTON:	   prevFigure();		  break;
-		case E_BUTTON:	   nextFigure();	      break;
-
-		case I_BUTTON:     figureMoveForward();	  break;
-		case K_BUTTON:     figureMoveBack();	  break;
-		case J_BUTTON:     figureMoveLeft();	  break;
-		case L_BUTTON:     figureMoveRight();	  break;
-		case M_BUTTON:	   figureMoveUp();		  break;
-		case N_BUTTON:     figureMoveDown();	  break;
-
-		case ZERO_BUTTON:  figureRotateX();       break;
-		case MINUS_BUTTON: figureRotateY();       break;
-		case EQUAL_BUTTON: figureRotateZ();       break;
-
-		case SPACE_BUTTON: selectionSwitch();     break;
-		case DEL_BUTTON:   rotationSwitch();      break;
-
-		case ENTER_BUTTON: light = !light;        break;
-
-		case Z_BUTTON:	   changeSphereTexture(); break;
-
-		case ESC_BUTTON:   glutLeaveMainLoop();	  break;
-		default:;
-	}
-
-	glutPostRedisplay();
-}
-
-void Editor::mouseMoveEvent(GLint x, GLint y) {
-	camera.mouseView(width, height);
-
-	glutPostRedisplay();
-}
-
-std::string Editor::boolToStr(bool val) {
-	return val ? "true" : "false";
+	return stream.str();
 }
 
 std::string Editor::textureInfo(std::vector<GLuint>::size_type num) {
-	return num == 0 ? "none" : std::to_string(figures[current_figure]->getTexture());
+	return num == 0 ? "none" : std::to_string(num);
+}
+
+std::string Editor::colorNameByNum(std::uint8_t num) {
+	std::string name;
+
+	switch (num) {
+		case 0: name = "white";     break;
+		case 1: name = "red";       break;
+		case 2: name = "orange";    break;
+		case 3: name = "yellow";    break;
+		case 4: name = "green";     break;
+		case 5: name = "blue";      break;
+		case 6: name = "dark blue"; break;
+		case 7: name = "violet";    break;
+		default:;
+	}
+
+	return name;
 }

@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include "Camera.h"
 #include "Sphere.h"
-#include "LightSource.h"
+#include "KeyButtons.h"
+#include "Color.h"
 #include "BMPTextureLoaderLight.h"
 
 class Editor {
@@ -14,76 +14,57 @@ public:
 
 	void addTexture(const char* image);
 
-	void readInputFiles(std::string objects_filename, std::string light_sources_filename);
-
 	void start(int* argc, char* argv[]);
 
-	~Editor();
-
 private:
-	static void readObjectsFile(std::string filename);
-	static void readLightSourcesFile(std::string filename);
-
-	static void nextFigure();
-	static void prevFigure();
-
-	static void figureMoveForward();
-	static void figureMoveBack();
-	static void figureMoveLeft();
-	static void figureMoveRight();
-	static void figureMoveUp();
-	static void figureMoveDown();
-
-	static void figureRotateX();
-	static void figureRotateY();
-	static void figureRotateZ();
-
-	static void changeSphereTexture();
-
-	static void selectionSwitch();
-	static void rotationSwitch();
-
-	static void drawText(std::string text, GLint x, GLint y);
-	static void drawInfo();
-	static void drawGrid();
-	static void drawScene();
-
-	static void drawLight(std::vector<LightSource*>::size_type num);
-
 	static void displayEvent();
 	static void reshapeEvent(GLint new_width, GLint new_height);
 	static void keyboardEvent(std::uint8_t key, GLint x, GLint y);
-	static void mouseMoveEvent(GLint x, GLint y);
+	static void mouseWheelEvent(GLint button, GLint dir, GLint x, GLint y);
 
-	static std::string boolToStr(bool val);
+	static void moveCameraX(GLfloat speed);
+	static void moveCameraY(GLfloat speed);
+	static void cameraScale(GLfloat factor);
+
+	static void changeViewType();
+	static void changeRadius(GLfloat radius_coef);
+	static void changeSectors(GLint sector_coef);
+	static void changeStacks(GLint stacks_coef);
+	static void changeTexture();
+	static void changeColor();
+
+	static void drawText(std::string text, GLint x, GLint y);
+	static void drawInfo();
+
+	static std::string valToStr(GLfloat val, std::uint8_t precision);
+
 	static std::string textureInfo(std::vector<GLuint>::size_type num);
+	static std::string colorNameByNum(std::uint8_t num);
 
-public:
-	struct Rotation {
-		bool active;
-		Vector3f coords;
+private:
+	enum class ViewType {
+		FILL,
+		LINE
 	};
 
 private:
-	static inline const char* window_title = "Scene";
+	static inline const char* window_title = "Sphere";
 
 	static inline GLint width;
 	static inline GLint height;
+	
+	static inline Sphere sphere;
 
-	static inline Camera camera;
+	static inline GLfloat camera_x;
+	static inline GLfloat camera_y;
+	static inline GLfloat camera_scale;
 
-	static inline std::vector<Sphere*> spheres;
-	static inline std::vector<LightSource*> light_sources;
+	static inline ViewType view_type;
 
-	static inline std::vector<Figure*> figures;
-	static inline std::vector<Rotation> figures_rotation;
-
-	static inline std::vector<Figure*>::size_type current_figure;
-
-	static inline bool selection;
-	static inline bool light;
+	static inline std::uint8_t color_num;
 
 	static inline TextureLoader texture_loader;
+	static inline GLuint current_texture;
 };
 
 #endif
